@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Soporte responsivo de alturas y scroll */
     .kanban-col {
       min-height: 220px;
       max-height: calc(100vh - 280px);
@@ -37,7 +36,6 @@
     .task-card.dragging {
       opacity: 0.35;
     }
-    /* Scrollbars delgadas y estéticas */
     .custom-scroll::-webkit-scrollbar,
     .kanban-col::-webkit-scrollbar {
       width: 5px;
@@ -78,18 +76,18 @@
         <!-- Toggle Vistas Kanban / Checklist -->
         <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shrink-0">
           <button id="viewTabKanban" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm">
-            <i class="fa-solid fa-table-columns"></i> <span class="inline">Kanban</span>
+            <i class="fa-solid fa-table-columns"></i> <span>Kanban</span>
           </button>
           <button id="viewTabChecklist" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-list-check"></i> <span class="inline">Checklist</span>
+            <i class="fa-solid fa-list-check"></i> <span>Checklist</span>
           </button>
         </div>
 
-        <!-- Filtro Día -->
-        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 shrink-0 flex-1 sm:flex-initial min-w-[130px]">
+        <!-- Filtro Día con título del pendiente -->
+        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 shrink-0 flex-1 sm:flex-initial min-w-[200px] max-w-full sm:max-w-md">
           <label for="dayFilter" class="text-[11px] font-bold uppercase tracking-wider text-slate-600 shrink-0">Día:</label>
-          <select id="dayFilter" class="w-full bg-white text-xs font-semibold rounded px-2 py-1 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="all">Todos (1-18)</option>
+          <select id="dayFilter" class="w-full bg-white text-xs font-semibold rounded px-2 py-1 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 truncate">
+            <option value="all">Todos los Días (Ciclo completo de 18 días)</option>
           </select>
         </div>
 
@@ -103,7 +101,7 @@
 
   <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
-    <!-- Leyenda de Bloques de Tiempo (Scrollable en móviles, Grid en pantallas grandes) -->
+    <!-- Leyenda de Bloques de Tiempo -->
     <section class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm">
       <div class="flex items-center justify-between mb-2 sm:mb-3">
         <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Leyenda de Bloques de Tiempo</h2>
@@ -111,7 +109,6 @@
       </div>
       
       <div class="flex sm:grid sm:grid-cols-3 md:grid-cols-6 gap-2.5 overflow-x-auto custom-scroll pb-1 sm:pb-0 snap-x">
-        <!-- Arranque -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-emerald-50 border border-emerald-100 shrink-0 min-w-[140px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-play text-[10px]"></i>
@@ -122,7 +119,6 @@
           </div>
         </div>
 
-        <!-- Profundo -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-blue-50 border border-blue-100 shrink-0 min-w-[150px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-filter text-[10px]"></i>
@@ -133,7 +129,6 @@
           </div>
         </div>
 
-        <!-- Medio -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-amber-50 border border-amber-100 shrink-0 min-w-[130px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-scale-balanced text-[10px]"></i>
@@ -144,7 +139,6 @@
           </div>
         </div>
 
-        <!-- Ligero -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 shrink-0 min-w-[125px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-feather text-[10px]"></i>
@@ -155,7 +149,6 @@
           </div>
         </div>
 
-        <!-- Buffer -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-sky-50 border border-sky-100 shrink-0 min-w-[145px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
@@ -166,7 +159,6 @@
           </div>
         </div>
 
-        <!-- Cierre -->
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-purple-50 border border-purple-100 shrink-0 min-w-[135px] sm:min-w-0 snap-start">
           <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <i class="fa-solid fa-spa text-[10px]"></i>
@@ -179,7 +171,7 @@
       </div>
     </section>
 
-    <!-- Barra de pestañas móviles para el Kanban (para enfocar columna en pantallas chicas) -->
+    <!-- Selector de columnas en móvil -->
     <div id="mobileColumnSelector" class="flex md:hidden bg-slate-200/80 p-1 rounded-xl text-xs font-bold gap-1 overflow-x-auto custom-scroll">
       <button data-col-target="todo" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg bg-white text-slate-800 shadow-xs whitespace-nowrap text-center">
         Por Hacer (<span id="m-badge-todo">0</span>)
@@ -197,7 +189,6 @@
 
     <!-- VISTA 1: TABLERO KANBAN -->
     <section id="kanbanSection" class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
-      
       <!-- POR HACER -->
       <div id="wrapper-todo" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col">
         <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
@@ -262,7 +253,6 @@
         </div>
       </div>
 
-      <!-- Contenedor dinámico de grupos de pendientes -->
       <div id="checklistContainer" class="space-y-3 sm:space-y-4"></div>
     </section>
 
@@ -399,13 +389,24 @@
       renderAll();
     }
 
-    // Inicializar selector de días
+    // Inicializar selector de días con títulos de pendientes extraídos dinámicamente
     const dayFilterEl = document.getElementById('dayFilter');
     for (let d = 1; d <= 18; d++) {
       const opt = document.createElement('option');
       opt.value = d;
       const isBuffer = BUFFER_DAYS.includes(d);
-      opt.textContent = `Día ${d}${isBuffer ? ' (🔄 Buffer)' : ''}`;
+
+      if (isBuffer) {
+        opt.textContent = `Día ${d}: 🔄 Buffer de Recuperación (Descanso/Atrasos)`;
+      } else {
+        // Encontrar los proyectos asignados a este día
+        const dayProjects = Array.from(new Set(
+          INITIAL_TASKS.filter(t => t.days.includes(d)).map(t => `${t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`)
+        ));
+        const projectLabel = dayProjects.length > 0 ? dayProjects.join(' | ') : 'Sin tareas asignadas';
+        opt.textContent = `Día ${d}: ${projectLabel}`;
+      }
+
       dayFilterEl.appendChild(opt);
     }
 
@@ -426,7 +427,7 @@
       localStorage.setItem('kanban_18d_tasks', JSON.stringify(tasks));
     }
 
-    // Navegación de columnas en Móviles
+    // Navegación de columnas en móviles
     document.querySelectorAll('.mobile-col-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         activeMobileCol = btn.dataset.colTarget;
@@ -436,11 +437,9 @@
 
     function updateMobileColumnVisibility() {
       if (window.innerWidth >= 768) {
-        // En tablets y desktop siempre visibles las 4
         document.querySelectorAll('.kanban-wrapper').forEach(w => w.classList.remove('hidden'));
         return;
       }
-      // En móvil se muestra la seleccionada
       document.querySelectorAll('.kanban-wrapper').forEach(wrapper => {
         if (wrapper.id === `wrapper-${activeMobileCol}`) {
           wrapper.classList.remove('hidden');
@@ -489,7 +488,6 @@
         columns[task.status].appendChild(card);
       });
 
-      // Contadores desktop y móviles
       ['todo', 'inprogress', 'buffer', 'done'].forEach(st => {
         document.getElementById(`badge-${st}`).innerText = counts[st];
         document.getElementById(`m-badge-${st}`).innerText = counts[st];
@@ -538,7 +536,6 @@
           <span class="text-slate-700 font-bold"><i class="fa-regular fa-clock text-slate-400 mr-1"></i>${task.duration}</span>
         </div>
 
-        <!-- Acciones Táctiles Rápidas -->
         <div class="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-slate-50 bg-slate-50/50 -mx-3 -mb-3 sm:-mx-3.5 sm:-mb-3.5 p-1.5 rounded-b-xl">
           <span class="text-[9px] text-slate-400 font-medium pl-1">Mover:</span>
           <div class="flex items-center gap-1">
@@ -602,7 +599,7 @@
 
       const grouped = {};
       filteredTasks.forEach(t => {
-        const key = `${t.pendingNum} - ${t.project}`;
+        const key = `${t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`;
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(t);
       });
