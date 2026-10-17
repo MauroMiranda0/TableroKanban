@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Tablero Kanban y Checklist de Ejecución (18 Días)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Soporte responsivo de alturas y scroll */
+    .kanban-col {
+      min-height: 220px;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    @media (max-width: 767px) {
+      .kanban-col {
+        max-height: none;
+        min-height: 140px;
+      }
+    }
+    .kanban-col.drag-over {
+      background-color: #f1f5f9;
+      border-color: #3b82f6;
+    }
+    .task-card {
+      cursor: grab;
+      user-select: none;
+      touch-action: pan-y;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .task-card:active {
+      cursor: grabbing;
+      transform: scale(0.99);
+    }
+    .task-card.dragging {
+      opacity: 0.35;
+    }
+    /* Scrollbars delgadas y estéticas */
+    .custom-scroll::-webkit-scrollbar,
+    .kanban-col::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track,
+    .kanban-col::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb,
+    .kanban-col::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Header Sticky & Responsive -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      
+      <!-- Brand & Título -->
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-blue-600 text-lg sm:text-2xl"></i>
+            <span>Sistema de Ejecución</span>
+            <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 shrink-0">18 Días</span>
+          </h1>
+          <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Control de foco, microtareas y sincronización viva</p>
+        </div>
+      </div>
+
+      <!-- Barra de Controles adaptativa -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-between md:justify-end">
+        
+        <!-- Toggle Vistas Kanban / Checklist -->
+        <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shrink-0">
+          <button id="viewTabKanban" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm">
+            <i class="fa-solid fa-table-columns"></i> <span class="inline">Kanban</span>
+          </button>
+          <button id="viewTabChecklist" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-list-check"></i> <span class="inline">Checklist</span>
+          </button>
+        </div>
+
+        <!-- Filtro Día -->
+        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 shrink-0 flex-1 sm:flex-initial min-w-[130px]">
+          <label for="dayFilter" class="text-[11px] font-bold uppercase tracking-wider text-slate-600 shrink-0">Día:</label>
+          <select id="dayFilter" class="w-full bg-white text-xs font-semibold rounded px-2 py-1 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">Todos (1-18)</option>
+          </select>
+        </div>
+
+        <!-- Reset -->
+        <button id="btnReset" title="Reiniciar datos al estado inicial" class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-transparent transition shrink-0">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
+
+    <!-- Leyenda de Bloques de Tiempo (Scrollable en móviles, Grid en pantallas grandes) -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2 sm:mb-3">
+        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Leyenda de Bloques de Tiempo</h2>
+        <span class="text-[10px] text-slate-400 sm:hidden flex items-center gap-1"><i class="fa-solid fa-arrows-left-right"></i> Desliza</span>
+      </div>
+      
+      <div class="flex sm:grid sm:grid-cols-3 md:grid-cols-6 gap-2.5 overflow-x-auto custom-scroll pb-1 sm:pb-0 snap-x">
+        <!-- Arranque -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-emerald-50 border border-emerald-100 shrink-0 min-w-[140px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-play text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-emerald-900 leading-tight">Arranque</div>
+            <div class="text-[10px] text-emerald-700 font-medium">5-10 min</div>
+          </div>
+        </div>
+
+        <!-- Profundo -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-blue-50 border border-blue-100 shrink-0 min-w-[150px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-filter text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-blue-900 leading-tight">Profundo</div>
+            <div class="text-[10px] text-blue-700 font-medium">50 min (Máx 2/d)</div>
+          </div>
+        </div>
+
+        <!-- Medio -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-amber-50 border border-amber-100 shrink-0 min-w-[130px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-scale-balanced text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-amber-900 leading-tight">Medio</div>
+            <div class="text-[10px] text-amber-700 font-medium">25 min</div>
+          </div>
+        </div>
+
+        <!-- Ligero -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 shrink-0 min-w-[125px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-feather text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-800 leading-tight">Ligero</div>
+            <div class="text-[10px] text-slate-600 font-medium">Rápido</div>
+          </div>
+        </div>
+
+        <!-- Buffer -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-sky-50 border border-sky-100 shrink-0 min-w-[145px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-sky-900 leading-tight">Buffer</div>
+            <div class="text-[10px] text-sky-700 font-medium">Días 4, 8, 12, 16</div>
+          </div>
+        </div>
+
+        <!-- Cierre -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-purple-50 border border-purple-100 shrink-0 min-w-[135px] sm:min-w-0 snap-start">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <i class="fa-solid fa-spa text-[10px]"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-purple-900 leading-tight">Cierre</div>
+            <div class="text-[10px] text-purple-700 font-medium">5 min ritual</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Barra de pestañas móviles para el Kanban (para enfocar columna en pantallas chicas) -->
+    <div id="mobileColumnSelector" class="flex md:hidden bg-slate-200/80 p-1 rounded-xl text-xs font-bold gap-1 overflow-x-auto custom-scroll">
+      <button data-col-target="todo" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg bg-white text-slate-800 shadow-xs whitespace-nowrap text-center">
+        Por Hacer (<span id="m-badge-todo">0</span>)
+      </button>
+      <button data-col-target="inprogress" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
+        En Curso (<span id="m-badge-inprogress">0</span>)
+      </button>
+      <button data-col-target="buffer" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
+        Buffer (<span id="m-badge-buffer">0</span>)
+      </button>
+      <button data-col-target="done" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
+        Hecho (<span id="m-badge-done">0</span>)
+      </button>
+    </div>
+
+    <!-- VISTA 1: TABLERO KANBAN -->
+    <section id="kanbanSection" class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+      
+      <!-- POR HACER -->
+      <div id="wrapper-todo" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-slate-700 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Por Hacer
+          </span>
+          <span id="badge-todo" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 font-bold text-slate-600">0</span>
+        </div>
+        <div id="col-todo" data-status="todo" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
+      </div>
+
+      <!-- EN CURSO -->
+      <div id="wrapper-inprogress" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-blue-700 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span> En Curso
+          </span>
+          <span id="badge-inprogress" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 font-bold text-blue-700">0</span>
+        </div>
+        <div id="col-inprogress" data-status="inprogress" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
+      </div>
+
+      <!-- EN BUFFER -->
+      <div id="wrapper-buffer" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-sky-700 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> En Buffer
+          </span>
+          <span id="badge-buffer" class="text-xs px-2 py-0.5 rounded-full bg-sky-100 font-bold text-sky-700">0</span>
+        </div>
+        <div id="col-buffer" data-status="buffer" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
+      </div>
+
+      <!-- HECHO -->
+      <div id="wrapper-done" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-emerald-700 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hecho
+          </span>
+          <span id="badge-done" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 font-bold text-emerald-700">0</span>
+        </div>
+        <div id="col-done" data-status="done" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: CHECKLIST (TO-DO LIST) -->
+    <section id="checklistSection" class="hidden space-y-3 sm:space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-blue-600"></i> Checklist Integral de Tareas
+          </h3>
+          <p class="text-xs text-slate-500">Las tareas marcadas se mueven automáticamente a <strong>Hecho</strong>.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
+            Progreso: <span id="checklist-progress-text" class="font-bold text-blue-600">0%</span>
+          </div>
+          <div class="w-28 sm:w-36 bg-slate-200 h-2.5 rounded-full overflow-hidden">
+            <div id="checklist-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor dinámico de grupos de pendientes -->
+      <div id="checklistContainer" class="space-y-3 sm:space-y-4"></div>
+    </section>
+
+    <!-- Cierre Ritual Diario y Reglas Clave -->
+    <section class="bg-slate-100/90 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+      <h3 class="text-center font-bold text-slate-800 text-sm sm:text-base mb-3 sm:mb-4 tracking-tight">Cierre Ritual Diario y Reglas Clave</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200">
+          <h4 class="text-xs sm:text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-moon text-purple-600"></i> Cierre Ritual Diario (5 min)
+          </h4>
+          <ul class="space-y-2 text-xs text-slate-600">
+            <li class="flex items-start gap-2.5">
+              <input type="checkbox" id="check1" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
+              <label for="check1" class="cursor-pointer select-none leading-snug">Revisa lo avanzado en la jornada.</label>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <input type="checkbox" id="check2" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
+              <label for="check2" class="cursor-pointer select-none leading-snug">Mueve tarjetas completadas a <strong>"Hecho"</strong>.</label>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <input type="checkbox" id="check3" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
+              <label for="check3" class="cursor-pointer select-none leading-snug">Define con precisión la primera tarea de mañana.</label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200">
+          <h4 class="text-xs sm:text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-amber-500"></i> Reglas de Buffers y Ejecución
+          </h4>
+          <div class="space-y-2 text-xs text-slate-600 leading-snug">
+            <div class="flex items-start gap-2">
+              <span class="text-base shrink-0">🧘</span>
+              <span><strong>Máximo 2 Bloques Profundos Diarios:</strong> limita a 50 min cada uno para prevenir fatiga cognitiva.</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-base shrink-0">🔄</span>
+              <span><strong>Buffers de Recuperación (Días 4, 8, 12, 16):</strong> usados estrictamente para recuperar atrasos o descansar, <em>NUNCA para adelantar trabajo</em>.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const INITIAL_TASKS = [
+      { id: 1, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir proyecto y listar en post-it qué falta", status: "todo" },
+      { id: 2, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir UNA subtarea y escribirla como 'terminado cuando...'", status: "todo" },
+      { id: 3, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Ejecutar esa subtarea", status: "todo" },
+      { id: 4, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Documentar avance en tracker visible", status: "todo" },
+      { id: 5, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Releer subtarea + abrir archivo exacto", status: "todo" },
+      { id: 6, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Ejecutar siguiente subtarea", status: "todo" },
+      { id: 7, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar y ajustar tracker", status: "todo" },
+      
+      { id: 8, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir Upwork + ver checklist de perfil", status: "todo" },
+      { id: 9, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar título + bio corta", status: "todo" },
+      { id: 10, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Definir tarifa y servicios", status: "todo" },
+      { id: 11, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir perfil + revisar qué falta", status: "todo" },
+      { id: 12, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Subir 3 portafolios", status: "todo" },
+      { id: 13, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Enviar 1 propuesta de prueba", status: "todo" },
+
+      { id: 14, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Listar proyectos pendientes y su estado", status: "todo" },
+      { id: 15, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir el más pequeño + definir 'done' + sesión de código", status: "todo" },
+      { id: 16, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Cerrar y documentar avance", status: "todo" },
+
+      { id: 17, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Crear plantilla de Spec", status: "todo" },
+      { id: 18, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar 1 Spec del proyecto más reciente", status: "todo" },
+      { id: 19, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Crear plantilla de Postmortem", status: "todo" },
+      { id: 20, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir plantilla de Postmortem", status: "todo" },
+      { id: 21, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar 1 Postmortem", status: "todo" },
+      { id: 22, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar que Specs y Postmortems estén enlazados", status: "todo" },
+
+      { id: 23, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir IWM + listar secciones que faltan", status: "todo" },
+      { id: 24, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir 1 sección + contenido mínimo viable + maquetar", status: "todo" },
+      { id: 25, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar y publicar borrador", status: "todo" },
+      { id: 26, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir sección siguiente", status: "todo" },
+      { id: 27, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Maquetar siguiente sección", status: "todo" },
+      { id: 28, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Verificar enlaces y responsive", status: "todo" },
+
+      { id: 29, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Decidir estructura del blog: 3 categorías máximo", status: "todo" },
+      { id: 30, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Escribir título + 3 bullets del primer post", status: "todo" },
+      { id: 31, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Redactar post 1 en borrador", status: "todo" },
+      { id: 32, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir borrador del post", status: "todo" },
+      { id: 33, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Conectar blog al portafolio", status: "todo" },
+      { id: 34, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar navegación y publicar", status: "todo" },
+
+      { id: 35, pendingNum: "7", project: "Instagram", days: [15], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir FB + capturar configuración usada", status: "todo" },
+      { id: 36, pendingNum: "7", project: "Instagram", days: [15], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Replicar pasos 1 y 2 en IG", status: "todo" },
+      { id: 37, pendingNum: "7", project: "Instagram", days: [15], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Replicar paso 3 + verificar perfil con checklist", status: "todo" },
+
+      { id: 38, pendingNum: "8", project: "Página FB personal", days: [17], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Decidir nombre y bio de la página", status: "todo" },
+      { id: 39, pendingNum: "8", project: "Página FB personal", days: [17], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Configurar categoría + foto + publicar primer post", status: "todo" },
+      { id: 40, pendingNum: "8", project: "Página FB personal", days: [17], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Verificar enlaces al blog/portafolio", status: "todo" },
+
+      { id: 41, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Revisar tablero: qué quedó hecho", status: "todo" },
+      { id: 42, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Repasar pendientes abiertos de los 8 items", status: "todo" },
+      { id: 43, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Actualizar tracker + definir próxima tanda", status: "todo" }
+    ];
+
+    const BUFFER_DAYS = [4, 8, 12, 16];
+    let tasks = JSON.parse(localStorage.getItem('kanban_18d_tasks')) || INITIAL_TASKS;
+    let currentFilterDay = 'all';
+    let activeMobileCol = 'todo';
+
+    // Tabs de Vistas principales
+    const btnTabKanban = document.getElementById('viewTabKanban');
+    const btnTabChecklist = document.getElementById('viewTabChecklist');
+    const kanbanSection = document.getElementById('kanbanSection');
+    const checklistSection = document.getElementById('checklistSection');
+    const mobileColumnSelector = document.getElementById('mobileColumnSelector');
+
+    btnTabKanban.addEventListener('click', () => switchView('kanban'));
+    btnTabChecklist.addEventListener('click', () => switchView('checklist'));
+
+    function switchView(view) {
+      if (view === 'kanban') {
+        kanbanSection.classList.remove('hidden');
+        checklistSection.classList.add('hidden');
+        mobileColumnSelector.classList.remove('hidden');
+        mobileColumnSelector.classList.add('flex');
+        btnTabKanban.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm';
+        btnTabChecklist.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+      } else {
+        kanbanSection.classList.add('hidden');
+        checklistSection.classList.remove('hidden');
+        mobileColumnSelector.classList.add('hidden');
+        mobileColumnSelector.classList.remove('flex');
+        btnTabChecklist.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm';
+        btnTabKanban.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+      }
+      renderAll();
+    }
+
+    // Inicializar selector de días
+    const dayFilterEl = document.getElementById('dayFilter');
+    for (let d = 1; d <= 18; d++) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      const isBuffer = BUFFER_DAYS.includes(d);
+      opt.textContent = `Día ${d}${isBuffer ? ' (🔄 Buffer)' : ''}`;
+      dayFilterEl.appendChild(opt);
+    }
+
+    dayFilterEl.addEventListener('change', (e) => {
+      currentFilterDay = e.target.value;
+      renderAll();
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (confirm('¿Deseas reiniciar todas las tareas al estado original?')) {
+        tasks = JSON.parse(JSON.stringify(INITIAL_TASKS));
+        saveTasks();
+        renderAll();
+      }
+    });
+
+    function saveTasks() {
+      localStorage.setItem('kanban_18d_tasks', JSON.stringify(tasks));
+    }
+
+    // Navegación de columnas en Móviles
+    document.querySelectorAll('.mobile-col-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeMobileCol = btn.dataset.colTarget;
+        updateMobileColumnVisibility();
+      });
+    });
+
+    function updateMobileColumnVisibility() {
+      if (window.innerWidth >= 768) {
+        // En tablets y desktop siempre visibles las 4
+        document.querySelectorAll('.kanban-wrapper').forEach(w => w.classList.remove('hidden'));
+        return;
+      }
+      // En móvil se muestra la seleccionada
+      document.querySelectorAll('.kanban-wrapper').forEach(wrapper => {
+        if (wrapper.id === `wrapper-${activeMobileCol}`) {
+          wrapper.classList.remove('hidden');
+        } else {
+          wrapper.classList.add('hidden');
+        }
+      });
+
+      document.querySelectorAll('.mobile-col-btn').forEach(btn => {
+        if (btn.dataset.colTarget === activeMobileCol) {
+          btn.className = 'mobile-col-btn flex-1 py-1.5 px-2 rounded-lg bg-white text-slate-900 font-bold shadow-xs whitespace-nowrap text-center';
+        } else {
+          btn.className = 'mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 font-medium whitespace-nowrap text-center';
+        }
+      });
+    }
+
+    window.addEventListener('resize', updateMobileColumnVisibility);
+
+    function renderAll() {
+      renderBoard();
+      renderChecklist();
+      updateMobileColumnVisibility();
+    }
+
+    // --- RENDER KANBAN ---
+    function renderBoard() {
+      const columns = {
+        todo: document.getElementById('col-todo'),
+        inprogress: document.getElementById('col-inprogress'),
+        buffer: document.getElementById('col-buffer'),
+        done: document.getElementById('col-done')
+      };
+
+      Object.values(columns).forEach(col => col.innerHTML = '');
+      const counts = { todo: 0, inprogress: 0, buffer: 0, done: 0 };
+
+      const filteredTasks = tasks.filter(t => {
+        if (currentFilterDay === 'all') return true;
+        return t.days.includes(Number(currentFilterDay));
+      });
+
+      filteredTasks.forEach(task => {
+        counts[task.status]++;
+        const card = createCardElement(task);
+        columns[task.status].appendChild(card);
+      });
+
+      // Contadores desktop y móviles
+      ['todo', 'inprogress', 'buffer', 'done'].forEach(st => {
+        document.getElementById(`badge-${st}`).innerText = counts[st];
+        document.getElementById(`m-badge-${st}`).innerText = counts[st];
+      });
+    }
+
+    function createCardElement(task) {
+      const card = document.createElement('div');
+      card.className = `task-card bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs hover:shadow-md transition-all ${task.status === 'done' ? 'border-emerald-200 bg-emerald-50/25' : ''}`;
+      card.draggable = true;
+      card.dataset.id = task.id;
+
+      const colorMap = {
+        emerald: { bg: 'bg-emerald-500', text: 'text-emerald-700', badge: 'bg-emerald-50 border-emerald-100' },
+        blue: { bg: 'bg-blue-600', text: 'text-blue-700', badge: 'bg-blue-50 border-blue-100' },
+        amber: { bg: 'bg-amber-500', text: 'text-amber-700', badge: 'bg-amber-50 border-amber-100' },
+        sky: { bg: 'bg-sky-500', text: 'text-sky-700', badge: 'bg-sky-50 border-sky-100' }
+      };
+      const c = colorMap[task.color] || colorMap.blue;
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-1.5 mb-1.5">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full ${c.bg} text-white flex items-center justify-center text-[9px] sm:text-[10px] shrink-0 shadow-xs">
+              <i class="fa-solid ${task.icon}"></i>
+            </span>
+            <span class="text-[11px] sm:text-xs font-bold text-slate-800 tracking-tight truncate">
+              #${task.pendingNum}
+            </span>
+          </div>
+          <span class="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${c.badge} ${c.text} shrink-0">
+            ${task.block}
+          </span>
+        </div>
+
+        <div class="text-xs font-semibold ${task.status === 'done' ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} mb-1 leading-snug">
+          ${task.task}
+        </div>
+
+        <div class="text-[10px] sm:text-[11px] text-slate-500 mb-2 flex items-center gap-1 truncate">
+          <i class="fa-regular fa-folder text-slate-400 text-[10px]"></i> <span class="truncate">${task.project}</span>
+        </div>
+
+        <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-medium">
+          <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i>D: ${task.days.join(',')}</span>
+          <span class="text-slate-700 font-bold"><i class="fa-regular fa-clock text-slate-400 mr-1"></i>${task.duration}</span>
+        </div>
+
+        <!-- Acciones Táctiles Rápidas -->
+        <div class="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-slate-50 bg-slate-50/50 -mx-3 -mb-3 sm:-mx-3.5 sm:-mb-3.5 p-1.5 rounded-b-xl">
+          <span class="text-[9px] text-slate-400 font-medium pl-1">Mover:</span>
+          <div class="flex items-center gap-1">
+            <button onclick="moveTask(${task.id}, 'todo')" class="px-2 py-1 text-[10px] rounded hover:bg-slate-200 text-slate-600 ${task.status === 'todo' ? 'font-bold bg-slate-200' : ''}" title="Por Hacer">Hacer</button>
+            <button onclick="moveTask(${task.id}, 'inprogress')" class="px-2 py-1 text-[10px] rounded hover:bg-blue-100 text-blue-700 ${task.status === 'inprogress' ? 'font-bold bg-blue-100' : ''}" title="En Curso">Curso</button>
+            <button onclick="moveTask(${task.id}, 'buffer')" class="px-2 py-1 text-[10px] rounded hover:bg-sky-100 text-sky-700 ${task.status === 'buffer' ? 'font-bold bg-sky-100' : ''}" title="Buffer">Buffer</button>
+            <button onclick="moveTask(${task.id}, 'done')" class="px-2 py-1 text-[10px] rounded hover:bg-emerald-100 text-emerald-700 ${task.status === 'done' ? 'font-bold bg-emerald-100' : ''}" title="Hecho"><i class="fa-solid fa-check"></i></button>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('dragstart', (e) => {
+        card.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', task.id);
+      });
+      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+      return card;
+    }
+
+    // Drag & Drop
+    document.querySelectorAll('.kanban-col').forEach(col => {
+      col.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        col.classList.add('drag-over');
+      });
+      col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+      col.addEventListener('drop', (e) => {
+        e.preventDefault();
+        col.classList.remove('drag-over');
+        const taskId = e.dataTransfer.getData('text/plain');
+        moveTask(Number(taskId), col.dataset.status);
+      });
+    });
+
+    window.moveTask = function(taskId, newStatus) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = newStatus;
+        saveTasks();
+        renderAll();
+      }
+    };
+
+    // --- RENDER CHECKLIST ---
+    function renderChecklist() {
+      const container = document.getElementById('checklistContainer');
+      container.innerHTML = '';
+
+      const filteredTasks = tasks.filter(t => {
+        if (currentFilterDay === 'all') return true;
+        return t.days.includes(Number(currentFilterDay));
+      });
+
+      const totalFiltered = filteredTasks.length;
+      const doneFiltered = filteredTasks.filter(t => t.status === 'done').length;
+      const percentage = totalFiltered > 0 ? Math.round((doneFiltered / totalFiltered) * 100) : 0;
+      
+      document.getElementById('checklist-progress-text').innerText = `${percentage}% (${doneFiltered}/${totalFiltered})`;
+      document.getElementById('checklist-progress-bar').style.width = `${percentage}%`;
+
+      const grouped = {};
+      filteredTasks.forEach(t => {
+        const key = `${t.pendingNum} - ${t.project}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(t);
+      });
+
+      if (Object.keys(grouped).length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 text-center text-slate-500">
+            <i class="fa-solid fa-mug-hot text-2xl sm:text-3xl text-sky-500 mb-2"></i>
+            <p class="font-bold text-slate-700 text-sm sm:text-base">Día de Buffer o descanso</p>
+            <p class="text-xs">No hay tareas nuevas programadas para este filtro.</p>
+          </div>
+        `;
+        return;
+      }
+
+      for (const [groupName, groupTasks] of Object.entries(grouped)) {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs';
+
+        const groupDone = groupTasks.filter(t => t.status === 'done').length;
+        const groupTotal = groupTasks.length;
+
+        groupEl.innerHTML = `
+          <div class="bg-slate-50/80 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0 ${groupDone === groupTotal ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm tracking-tight truncate">${groupName}</h4>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${groupDone === groupTotal ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}">
+              ${groupDone}/${groupTotal}
+            </span>
+          </div>
+          <div class="divide-y divide-slate-100 p-1 sm:p-2">
+            ${groupTasks.map(t => {
+              const isDone = t.status === 'done';
+              return `
+                <div class="flex items-start gap-2.5 p-2 sm:p-2.5 rounded-xl transition hover:bg-slate-50 ${isDone ? 'bg-emerald-50/25' : ''}">
+                  <input 
+                    type="checkbox" 
+                    id="chk-task-${t.id}" 
+                    ${isDone ? 'checked' : ''} 
+                    onchange="toggleTaskDone(${t.id}, this.checked)"
+                    class="mt-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                  >
+                  <label for="chk-task-${t.id}" class="flex-1 cursor-pointer select-none min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                      <span class="text-xs font-semibold ${isDone ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} leading-tight">
+                        ${t.task}
+                      </span>
+                      ${isDone ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5"><i class="fa-solid fa-check text-[8px]"></i> HECHO</span>' : ''}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-[11px] text-slate-400">
+                      <span><i class="fa-regular fa-clock mr-1"></i>${t.duration} (${t.block})</span>
+                      <span><i class="fa-regular fa-calendar mr-1"></i>D: ${t.days.join(',')}</span>
+                      <span class="text-slate-500 capitalize">Estado: <strong>${t.status}</strong></span>
+                    </div>
+                  </label>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        container.appendChild(groupEl);
+      }
+    }
+
+    window.toggleTaskDone = function(taskId, isChecked) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = isChecked ? 'done' : 'todo';
+        saveTasks();
+        renderAll();
+      }
+    };
+
+    // Render Inicial
+    renderAll();
+  </script>
+</body>
+</html>
