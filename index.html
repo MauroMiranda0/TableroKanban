@@ -50,6 +50,17 @@
       background: #cbd5e1;
       border-radius: 9999px;
     }
+    /* Estilos para badges de días seleccionables en el modal */
+    .day-pill-checkbox:checked + label {
+      background-color: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    /* Estilo para selector de prioridad */
+    .priority-radio:checked + label {
+      border-color: currentColor;
+      box-shadow: 0 0 0 1.5px currentColor;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -66,13 +77,18 @@
             <span>Sistema de Ejecución</span>
             <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 shrink-0">18 Días</span>
           </h1>
-          <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Control de foco, microtareas y sincronización viva</p>
+          <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Gestión, control de foco y sincronización viva</p>
         </div>
       </div>
 
       <!-- Barra de Controles adaptativa -->
       <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-between md:justify-end">
         
+        <!-- Botón Nueva Tarea (CRUD) -->
+        <button id="btnNewTask" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition flex items-center gap-1.5 shrink-0">
+          <i class="fa-solid fa-plus text-xs"></i> <span>Nueva Tarea</span>
+        </button>
+
         <!-- Toggle Vistas Kanban / Checklist -->
         <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shrink-0">
           <button id="viewTabKanban" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm">
@@ -83,7 +99,7 @@
           </button>
         </div>
 
-        <!-- Filtro Día con título del pendiente -->
+        <!-- Filtro Día -->
         <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 shrink-0 flex-1 sm:flex-initial min-w-[200px] max-w-full sm:max-w-md">
           <label for="dayFilter" class="text-[11px] font-bold uppercase tracking-wider text-slate-600 shrink-0">Día:</label>
           <select id="dayFilter" class="w-full bg-white text-xs font-semibold rounded px-2 py-1 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 truncate">
@@ -241,7 +257,7 @@
           <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-list-check text-blue-600"></i> Checklist Integral de Tareas
           </h3>
-          <p class="text-xs text-slate-500">Las tareas marcadas se mueven automáticamente a <strong>Hecho</strong>.</p>
+          <p class="text-xs text-slate-500">Marca, edita o elimina tareas en tiempo real.</p>
         </div>
         <div class="flex items-center gap-3">
           <div class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
@@ -300,6 +316,156 @@
 
   </main>
 
+  <!-- ==================== MODAL DE CREAR / EDITAR TAREA ==================== -->
+  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200">
+    <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalTitle" class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-blue-600"></i>
+          <span>Crear Nueva Tarea</span>
+        </h3>
+        <button id="btnCancelModal" class="text-slate-400 hover:text-slate-600 rounded-lg p-1.5 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Formulario) -->
+      <form id="taskForm" class="p-5 overflow-y-auto space-y-4 custom-scroll text-xs">
+        <input type="hidden" id="taskEditId" value="">
+
+        <!-- Título / Descripción de la tarea -->
+        <div>
+          <label for="taskTitle" class="block font-bold text-slate-700 mb-1">Título de la Tarea <span class="text-rose-500">*</span></label>
+          <input type="text" id="taskTitle" required placeholder="Ej. Implementar autenticación o redactar propuesta..." class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Fila 1: Proyecto y Número de Pendiente -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="taskProject" class="block font-bold text-slate-700 mb-1">Proyecto o Área <span class="text-rose-500">*</span></label>
+            <input type="text" id="taskProject" required placeholder="Ej. Proyecto Jocelyn, Upwork..." class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="taskPendingNum" class="block font-bold text-slate-700 mb-1">Nº Pendiente / Tag</label>
+            <input type="text" id="taskPendingNum" placeholder="Ej. 1, 2, Cierre, General" class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Fila 2: Tipo de Bloque y Duración -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="taskBlock" class="block font-bold text-slate-700 mb-1">Tipo de Bloque</label>
+            <select id="taskBlock" class="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="Arranque">Arranque (5-10 min)</option>
+              <option value="Profundo">Profundo (50 min)</option>
+              <option value="Medio">Medio (25 min)</option>
+              <option value="Ligero">Ligero (Rápido)</option>
+              <option value="Buffer">Buffer (Recuperación)</option>
+              <option value="Cierre">Cierre (Ritual)</option>
+            </select>
+          </div>
+          <div>
+            <label for="taskDuration" class="block font-bold text-slate-700 mb-1">Duración Estimada</label>
+            <input type="text" id="taskDuration" placeholder="Ej. 10 min, 25 min, 50 min" class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Fila 3: Prioridad y Estado -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Prioridad de la Tarea</label>
+            <div class="grid grid-cols-4 gap-1.5" id="priorityOptions">
+              <div>
+                <input type="radio" name="taskPriority" id="prio-low" value="low" class="priority-radio sr-only">
+                <label for="prio-low" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 cursor-pointer transition select-none">
+                  <i class="fa-solid fa-arrow-down text-[10px] text-emerald-600 mb-0.5"></i>
+                  <span class="text-[10px] font-bold">Baja</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="taskPriority" id="prio-medium" value="medium" class="priority-radio sr-only" checked>
+                <label for="prio-medium" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-blue-700 cursor-pointer transition select-none">
+                  <i class="fa-solid fa-minus text-[10px] text-blue-500 mb-0.5"></i>
+                  <span class="text-[10px] font-bold">Media</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="taskPriority" id="prio-high" value="high" class="priority-radio sr-only">
+                <label for="prio-high" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-amber-700 cursor-pointer transition select-none">
+                  <i class="fa-solid fa-arrow-up text-[10px] text-amber-500 mb-0.5"></i>
+                  <span class="text-[10px] font-bold">Alta</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="taskPriority" id="prio-urgent" value="urgent" class="priority-radio sr-only">
+                <label for="prio-urgent" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-rose-700 cursor-pointer transition select-none">
+                  <i class="fa-solid fa-triangle-exclamation text-[10px] text-rose-500 mb-0.5"></i>
+                  <span class="text-[10px] font-bold">Urgente</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label for="taskStatus" class="block font-bold text-slate-700 mb-1">Estado de la Tarea</label>
+            <select id="taskStatus" class="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="todo">Por Hacer</option>
+              <option value="inprogress">En Curso</option>
+              <option value="buffer">En Buffer</option>
+              <option value="done">Hecho</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Selección de Días (1 al 18) -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block font-bold text-slate-700">Días asignados (Ciclo 1 al 18):</label>
+            <div class="flex gap-2 text-[10px]">
+              <button type="button" id="btnSelectAllDays" class="text-blue-600 hover:underline">Todos</button>
+              <span>·</span>
+              <button type="button" id="btnClearDays" class="text-slate-500 hover:underline">Limpiar</button>
+            </div>
+          </div>
+          <div id="daysCheckboxContainer" class="grid grid-cols-6 sm:grid-cols-9 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <!-- Se generará dinámicamente con checkboxes estilizados -->
+          </div>
+          <p id="daysValidationMsg" class="text-[11px] text-rose-500 font-medium mt-1 hidden">Debes seleccionar al menos un día.</p>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" id="btnCancelModalBottom" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Tarea
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Diálogo Modal de Confirmación para Eliminar -->
+  <div id="deleteConfirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 p-5 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3 text-lg">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h4 class="text-base font-extrabold text-slate-900 mb-1">¿Eliminar tarea?</h4>
+      <p id="deleteConfirmText" class="text-xs text-slate-500 mb-5 leading-relaxed">Esta acción no se puede deshacer.</p>
+      <div class="flex items-center justify-center gap-2">
+        <button id="btnCancelDelete" class="w-1/2 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+          Cancelar
+        </button>
+        <button id="btnConfirmDelete" class="w-1/2 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition">
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const INITIAL_TASKS = [
       { id: 1, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir proyecto y listar en post-it qué falta", status: "todo" },
@@ -356,9 +522,56 @@
     ];
 
     const BUFFER_DAYS = [4, 8, 12, 16];
+    
+    // Mapeo canónico de bloques a colores e íconos
+    const BLOCK_CONFIG = {
+      'Arranque': { color: 'emerald', icon: 'fa-play', defaultDuration: '10 min' },
+      'Profundo': { color: 'blue', icon: 'fa-filter', defaultDuration: '50 min' },
+      'Medio':    { color: 'amber', icon: 'fa-scale-balanced', defaultDuration: '25 min' },
+      'Ligero':   { color: 'slate', icon: 'fa-feather', defaultDuration: '15 min' },
+      'Buffer':   { color: 'sky', icon: 'fa-arrows-rotate', defaultDuration: '50 min' },
+      'Cierre':   { color: 'purple', icon: 'fa-spa', defaultDuration: '5 min' }
+    };
+
+    // Configuración de Prioridades
+    const PRIORITY_CONFIG = {
+      low: {
+        label: 'Baja',
+        icon: 'fa-arrow-down',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dotColor: 'text-emerald-500'
+      },
+      medium: {
+        label: 'Media',
+        icon: 'fa-minus',
+        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        dotColor: 'text-blue-500'
+      },
+      high: {
+        label: 'Alta',
+        icon: 'fa-arrow-up',
+        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        dotColor: 'text-amber-500'
+      },
+      urgent: {
+        label: 'Urgente',
+        icon: 'fa-triangle-exclamation',
+        badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+        dotColor: 'text-rose-500'
+      }
+    };
+
     let tasks = JSON.parse(localStorage.getItem('kanban_18d_tasks')) || INITIAL_TASKS;
+
+    // Asegurar que las tareas existentes tengan una prioridad por defecto
+    tasks = tasks.map(t => ({
+      ...t,
+      priority: t.priority || 'medium'
+    }));
+
     let currentFilterDay = 'all';
     let activeMobileCol = 'todo';
+    let taskPendingDeleteId = null;
 
     // Tabs de Vistas principales
     const btnTabKanban = document.getElementById('viewTabKanban');
@@ -389,45 +602,51 @@
       renderAll();
     }
 
-    // Inicializar selector de días con títulos de pendientes extraídos dinámicamente
-    const dayFilterEl = document.getElementById('dayFilter');
-    for (let d = 1; d <= 18; d++) {
-      const opt = document.createElement('option');
-      opt.value = d;
-      const isBuffer = BUFFER_DAYS.includes(d);
+    // Inicializar selector de días
+    function populateDayFilter() {
+      const dayFilterEl = document.getElementById('dayFilter');
+      const selectedVal = dayFilterEl.value || 'all';
+      dayFilterEl.innerHTML = '<option value="all">Todos los Días (Ciclo completo de 18 días)</option>';
 
-      if (isBuffer) {
-        opt.textContent = `Día ${d}: 🔄 Buffer de Recuperación (Descanso/Atrasos)`;
-      } else {
-        // Encontrar los proyectos asignados a este día
-        const dayProjects = Array.from(new Set(
-          INITIAL_TASKS.filter(t => t.days.includes(d)).map(t => `${t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`)
-        ));
-        const projectLabel = dayProjects.length > 0 ? dayProjects.join(' | ') : 'Sin tareas asignadas';
-        opt.textContent = `Día ${d}: ${projectLabel}`;
+      for (let d = 1; d <= 18; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        const isBuffer = BUFFER_DAYS.includes(d);
+
+        if (isBuffer) {
+          opt.textContent = `Día ${d}: 🔄 Buffer de Recuperación (Descanso/Atrasos)`;
+        } else {
+          const dayProjects = Array.from(new Set(
+            tasks.filter(t => t.days.includes(d)).map(t => `${t.pendingNum && t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`)
+          ));
+          const projectLabel = dayProjects.length > 0 ? dayProjects.join(' | ') : 'Sin tareas asignadas';
+          opt.textContent = `Día ${d}: ${projectLabel}`;
+        }
+        dayFilterEl.appendChild(opt);
       }
-
-      dayFilterEl.appendChild(opt);
+      dayFilterEl.value = selectedVal;
     }
 
-    dayFilterEl.addEventListener('change', (e) => {
+    document.getElementById('dayFilter').addEventListener('change', (e) => {
       currentFilterDay = e.target.value;
       renderAll();
     });
 
+    // Resetear al estado inicial
     document.getElementById('btnReset').addEventListener('click', () => {
-      if (confirm('¿Deseas reiniciar todas las tareas al estado original?')) {
+      openDeleteConfirmModal('¿Deseas reiniciar todas las tareas al estado original de fábrica?', () => {
         tasks = JSON.parse(JSON.stringify(INITIAL_TASKS));
         saveTasks();
+        populateDayFilter();
         renderAll();
-      }
+      });
     });
 
     function saveTasks() {
       localStorage.setItem('kanban_18d_tasks', JSON.stringify(tasks));
     }
 
-    // Navegación de columnas en móviles
+    // Columnas móviles
     document.querySelectorAll('.mobile-col-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         activeMobileCol = btn.dataset.colTarget;
@@ -483,9 +702,9 @@
       });
 
       filteredTasks.forEach(task => {
-        counts[task.status]++;
+        if (counts[task.status] !== undefined) counts[task.status]++;
         const card = createCardElement(task);
-        columns[task.status].appendChild(card);
+        if (columns[task.status]) columns[task.status].appendChild(card);
       });
 
       ['todo', 'inprogress', 'buffer', 'done'].forEach(st => {
@@ -504,23 +723,42 @@
         emerald: { bg: 'bg-emerald-500', text: 'text-emerald-700', badge: 'bg-emerald-50 border-emerald-100' },
         blue: { bg: 'bg-blue-600', text: 'text-blue-700', badge: 'bg-blue-50 border-blue-100' },
         amber: { bg: 'bg-amber-500', text: 'text-amber-700', badge: 'bg-amber-50 border-amber-100' },
-        sky: { bg: 'bg-sky-500', text: 'text-sky-700', badge: 'bg-sky-50 border-sky-100' }
+        sky: { bg: 'bg-sky-500', text: 'text-sky-700', badge: 'bg-sky-50 border-sky-100' },
+        purple: { bg: 'bg-purple-600', text: 'text-purple-700', badge: 'bg-purple-50 border-purple-100' },
+        slate: { bg: 'bg-slate-500', text: 'text-slate-700', badge: 'bg-slate-50 border-slate-200' }
       };
       const c = colorMap[task.color] || colorMap.blue;
+      const prio = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['medium'];
 
       card.innerHTML = `
         <div class="flex items-start justify-between gap-1.5 mb-1.5">
           <div class="flex items-center gap-1.5 min-w-0">
             <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full ${c.bg} text-white flex items-center justify-center text-[9px] sm:text-[10px] shrink-0 shadow-xs">
-              <i class="fa-solid ${task.icon}"></i>
+              <i class="fa-solid ${task.icon || 'fa-bolt'}"></i>
             </span>
             <span class="text-[11px] sm:text-xs font-bold text-slate-800 tracking-tight truncate">
-              #${task.pendingNum}
+              ${task.pendingNum ? '#' + task.pendingNum : 'Tarea'}
+            </span>
+            <!-- Badge de Prioridad -->
+            <span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${prio.badgeClass}" title="Prioridad: ${prio.label}">
+              <i class="fa-solid ${prio.icon} text-[8px]"></i>
+              <span class="hidden sm:inline">${prio.label}</span>
             </span>
           </div>
-          <span class="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${c.badge} ${c.text} shrink-0">
-            ${task.block}
-          </span>
+
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${c.badge} ${c.text} shrink-0">
+              ${task.block}
+            </span>
+            <!-- Botón Editar -->
+            <button onclick="editTask(${task.id})" title="Editar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
+              <i class="fa-solid fa-pen text-[10px]"></i>
+            </button>
+            <!-- Botón Eliminar -->
+            <button onclick="deleteTask(${task.id})" title="Eliminar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+              <i class="fa-solid fa-trash-can text-[10px]"></i>
+            </button>
+          </div>
         </div>
 
         <div class="text-xs font-semibold ${task.status === 'done' ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} mb-1 leading-snug">
@@ -533,7 +771,7 @@
 
         <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-medium">
           <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i>D: ${task.days.join(',')}</span>
-          <span class="text-slate-700 font-bold"><i class="fa-regular fa-clock text-slate-400 mr-1"></i>${task.duration}</span>
+          <span class="text-slate-700 font-bold"><i class="fa-regular fa-clock text-slate-400 mr-1"></i>${task.duration || '25 min'}</span>
         </div>
 
         <div class="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-slate-50 bg-slate-50/50 -mx-3 -mb-3 sm:-mx-3.5 sm:-mb-3.5 p-1.5 rounded-b-xl">
@@ -599,7 +837,8 @@
 
       const grouped = {};
       filteredTasks.forEach(t => {
-        const key = `${t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`;
+        const prefix = (t.pendingNum && t.pendingNum !== 'Cierre') ? `Pendiente ${t.pendingNum} · ` : '';
+        const key = `${prefix}${t.project}`;
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(t);
       });
@@ -608,8 +847,8 @@
         container.innerHTML = `
           <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 text-center text-slate-500">
             <i class="fa-solid fa-mug-hot text-2xl sm:text-3xl text-sky-500 mb-2"></i>
-            <p class="font-bold text-slate-700 text-sm sm:text-base">Día de Buffer o descanso</p>
-            <p class="text-xs">No hay tareas nuevas programadas para este filtro.</p>
+            <p class="font-bold text-slate-700 text-sm sm:text-base">Sin tareas en este filtro</p>
+            <p class="text-xs">No hay pendientes asignados para este día o estado.</p>
           </div>
         `;
         return;
@@ -635,28 +874,45 @@
           <div class="divide-y divide-slate-100 p-1 sm:p-2">
             ${groupTasks.map(t => {
               const isDone = t.status === 'done';
+              const prio = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG['medium'];
               return `
-                <div class="flex items-start gap-2.5 p-2 sm:p-2.5 rounded-xl transition hover:bg-slate-50 ${isDone ? 'bg-emerald-50/25' : ''}">
-                  <input 
-                    type="checkbox" 
-                    id="chk-task-${t.id}" 
-                    ${isDone ? 'checked' : ''} 
-                    onchange="toggleTaskDone(${t.id}, this.checked)"
-                    class="mt-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-                  >
-                  <label for="chk-task-${t.id}" class="flex-1 cursor-pointer select-none min-w-0">
-                    <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span class="text-xs font-semibold ${isDone ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} leading-tight">
-                        ${t.task}
-                      </span>
-                      ${isDone ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5"><i class="fa-solid fa-check text-[8px]"></i> HECHO</span>' : ''}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-[11px] text-slate-400">
-                      <span><i class="fa-regular fa-clock mr-1"></i>${t.duration} (${t.block})</span>
-                      <span><i class="fa-regular fa-calendar mr-1"></i>D: ${t.days.join(',')}</span>
-                      <span class="text-slate-500 capitalize">Estado: <strong>${t.status}</strong></span>
-                    </div>
-                  </label>
+                <div class="flex items-start justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl transition hover:bg-slate-50 ${isDone ? 'bg-emerald-50/25' : ''}">
+                  <div class="flex items-start gap-2.5 flex-1 min-w-0">
+                    <input 
+                      type="checkbox" 
+                      id="chk-task-${t.id}" 
+                      ${isDone ? 'checked' : ''} 
+                      onchange="toggleTaskDone(${t.id}, this.checked)"
+                      class="mt-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                    >
+                    <label for="chk-task-${t.id}" class="flex-1 cursor-pointer select-none min-w-0">
+                      <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                        <span class="text-xs font-semibold ${isDone ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} leading-tight">
+                          ${t.task}
+                        </span>
+                        <!-- Badge Prioridad -->
+                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full border inline-flex items-center gap-0.5 ${prio.badgeClass}">
+                          <i class="fa-solid ${prio.icon} text-[8px]"></i> ${prio.label}
+                        </span>
+                        ${isDone ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5"><i class="fa-solid fa-check text-[8px]"></i> HECHO</span>' : ''}
+                      </div>
+                      <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] sm:text-[11px] text-slate-400">
+                        <span><i class="fa-regular fa-clock mr-1"></i>${t.duration || '25 min'} (${t.block})</span>
+                        <span><i class="fa-regular fa-calendar mr-1"></i>D: ${t.days.join(',')}</span>
+                        <span class="text-slate-500 capitalize">Estado: <strong>${t.status}</strong></span>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  <!-- Acciones CRUD en Checklist -->
+                  <div class="flex items-center gap-1 shrink-0 ml-1">
+                    <button onclick="editTask(${t.id})" title="Editar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
+                      <i class="fa-solid fa-pen text-[10px]"></i>
+                    </button>
+                    <button onclick="deleteTask(${t.id})" title="Eliminar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+                      <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    </button>
+                  </div>
                 </div>
               `;
             }).join('')}
@@ -675,7 +931,237 @@
       }
     };
 
-    // Render Inicial
+    // ==================== FUNCIONALIDAD CRUD Y MODAL ====================
+
+    // Inicializar los checkboxes del selector de días en el modal
+    const daysContainer = document.getElementById('daysCheckboxContainer');
+    for (let day = 1; day <= 18; day++) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'relative text-center';
+      wrapper.innerHTML = `
+        <input type="checkbox" id="modalDay${day}" value="${day}" class="day-pill-checkbox sr-only">
+        <label for="modalDay${day}" class="block py-1 text-center font-bold text-[11px] text-slate-600 border border-slate-200 bg-white rounded-lg cursor-pointer hover:bg-slate-100 transition select-none">
+          D${day}
+        </label>
+      `;
+      daysContainer.appendChild(wrapper);
+    }
+
+    // Botones de selección rápida de días
+    document.getElementById('btnSelectAllDays').addEventListener('click', () => {
+      document.querySelectorAll('.day-pill-checkbox').forEach(cb => cb.checked = true);
+      document.getElementById('daysValidationMsg').classList.add('hidden');
+    });
+
+    document.getElementById('btnClearDays').addEventListener('click', () => {
+      document.querySelectorAll('.day-pill-checkbox').forEach(cb => cb.checked = false);
+    });
+
+    // Abrir Modal para Crear
+    const taskModal = document.getElementById('taskModal');
+    const taskForm = document.getElementById('taskForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const taskEditId = document.getElementById('taskEditId');
+    const taskBlockSelect = document.getElementById('taskBlock');
+    const taskDurationInput = document.getElementById('taskDuration');
+
+    document.getElementById('btnNewTask').addEventListener('click', () => {
+      openTaskModal();
+    });
+
+    // Actualizar duración por defecto según bloque seleccionado
+    taskBlockSelect.addEventListener('change', (e) => {
+      const block = BLOCK_CONFIG[e.target.value];
+      if (block && (!taskDurationInput.value || taskDurationInput.dataset.autoFilled === "true")) {
+        taskDurationInput.value = block.defaultDuration;
+        taskDurationInput.dataset.autoFilled = "true";
+      }
+    });
+
+    taskDurationInput.addEventListener('input', () => {
+      taskDurationInput.dataset.autoFilled = "false";
+    });
+
+    function openTaskModal(task = null) {
+      taskForm.reset();
+      document.getElementById('daysValidationMsg').classList.add('hidden');
+
+      if (task) {
+        // Modo Edición
+        modalTitle.innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-600"></i> Editar Tarea';
+        taskEditId.value = task.id;
+        document.getElementById('taskTitle').value = task.task;
+        document.getElementById('taskProject').value = task.project;
+        document.getElementById('taskPendingNum').value = task.pendingNum || '';
+        document.getElementById('taskBlock').value = task.block || 'Profundo';
+        document.getElementById('taskDuration').value = task.duration || '50 min';
+        document.getElementById('taskDuration').dataset.autoFilled = "false";
+        document.getElementById('taskStatus').value = task.status || 'todo';
+
+        // Prioridad seleccionada
+        const targetPrio = task.priority || 'medium';
+        const prioRadio = document.querySelector(`input[name="taskPriority"][value="${targetPrio}"]`);
+        if (prioRadio) prioRadio.checked = true;
+
+        // Marcar días
+        document.querySelectorAll('.day-pill-checkbox').forEach(cb => {
+          cb.checked = task.days.includes(Number(cb.value));
+        });
+      } else {
+        // Modo Nueva Tarea
+        modalTitle.innerHTML = '<i class="fa-solid fa-plus-circle text-blue-600"></i> Crear Nueva Tarea';
+        taskEditId.value = '';
+        taskDurationInput.dataset.autoFilled = "true";
+        document.getElementById('taskBlock').value = 'Profundo';
+        document.getElementById('taskDuration').value = '50 min';
+        document.getElementById('taskStatus').value = 'todo';
+
+        // Por defecto: Prioridad Media
+        const defaultPrio = document.querySelector('input[name="taskPriority"][value="medium"]');
+        if (defaultPrio) defaultPrio.checked = true;
+
+        // Si hay un día seleccionado en el filtro (distinto de 'all'), seleccionarlo automáticamente
+        const filterDayNum = Number(currentFilterDay);
+        document.querySelectorAll('.day-pill-checkbox').forEach(cb => {
+          cb.checked = (!isNaN(filterDayNum) && filterDayNum >= 1 && filterDayNum <= 18) ? (Number(cb.value) === filterDayNum) : false;
+        });
+      }
+
+      taskModal.classList.remove('hidden');
+      document.getElementById('taskTitle').focus();
+    }
+
+    function closeTaskModal() {
+      taskModal.classList.add('hidden');
+    }
+
+    document.getElementById('btnCancelModal').addEventListener('click', closeTaskModal);
+    document.getElementById('btnCancelModalBottom').addEventListener('click', closeTaskModal);
+    taskModal.addEventListener('click', (e) => {
+      if (e.target === taskModal) closeTaskModal();
+    });
+
+    // Guardar (Crear o Actualizar)
+    taskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const selectedDays = Array.from(document.querySelectorAll('.day-pill-checkbox:checked'))
+        .map(cb => Number(cb.value))
+        .sort((a, b) => a - b);
+
+      if (selectedDays.length === 0) {
+        document.getElementById('daysValidationMsg').classList.remove('hidden');
+        return;
+      }
+
+      const id = taskEditId.value ? Number(taskEditId.value) : null;
+      const title = document.getElementById('taskTitle').value.trim();
+      const project = document.getElementById('taskProject').value.trim();
+      const pendingNum = document.getElementById('taskPendingNum').value.trim();
+      const block = document.getElementById('taskBlock').value;
+      const duration = document.getElementById('taskDuration').value.trim() || '25 min';
+      const status = document.getElementById('taskStatus').value;
+      
+      const priorityRadio = document.querySelector('input[name="taskPriority"]:checked');
+      const priority = priorityRadio ? priorityRadio.value : 'medium';
+
+      const blockInfo = BLOCK_CONFIG[block] || BLOCK_CONFIG['Profundo'];
+
+      if (id) {
+        // Editar existente
+        const taskIndex = tasks.findIndex(t => t.id === id);
+        if (taskIndex !== -1) {
+          tasks[taskIndex] = {
+            ...tasks[taskIndex],
+            task: title,
+            project: project,
+            pendingNum: pendingNum,
+            days: selectedDays,
+            block: block,
+            color: blockInfo.color,
+            icon: blockInfo.icon,
+            duration: duration,
+            status: status,
+            priority: priority
+          };
+        }
+      } else {
+        // Crear nueva tarea
+        const newId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+        const newTask = {
+          id: newId,
+          pendingNum: pendingNum || `${newId}`,
+          project: project,
+          days: selectedDays,
+          block: block,
+          color: blockInfo.color,
+          icon: blockInfo.icon,
+          duration: duration,
+          task: title,
+          status: status,
+          priority: priority
+        };
+        tasks.push(newTask);
+      }
+
+      saveTasks();
+      populateDayFilter();
+      renderAll();
+      closeTaskModal();
+    });
+
+    // Manejar Edición desde tarjeta o checklist
+    window.editTask = function(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        openTaskModal(task);
+      }
+    };
+
+    // Manejar Eliminación con confirmación modal limpia (sin alert/confirm)
+    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+    const deleteConfirmText = document.getElementById('deleteConfirmText');
+    const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+    const btnCancelDelete = document.getElementById('btnCancelDelete');
+    let onConfirmDeleteCallback = null;
+
+    function openDeleteConfirmModal(message, callback) {
+      deleteConfirmText.textContent = message;
+      onConfirmDeleteCallback = callback;
+      deleteConfirmModal.classList.remove('hidden');
+    }
+
+    function closeDeleteConfirmModal() {
+      deleteConfirmModal.classList.add('hidden');
+      onConfirmDeleteCallback = null;
+    }
+
+    btnCancelDelete.addEventListener('click', closeDeleteConfirmModal);
+    deleteConfirmModal.addEventListener('click', (e) => {
+      if (e.target === deleteConfirmModal) closeDeleteConfirmModal();
+    });
+
+    btnConfirmDelete.addEventListener('click', () => {
+      if (onConfirmDeleteCallback) {
+        onConfirmDeleteCallback();
+      }
+      closeDeleteConfirmModal();
+    });
+
+    window.deleteTask = function(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      openDeleteConfirmModal(`¿Estás seguro de que deseas eliminar la tarea "${task.task}"?`, () => {
+        tasks = tasks.filter(t => t.id !== taskId);
+        saveTasks();
+        populateDayFilter();
+        renderAll();
+      });
+    };
+
+    // Inicialización al cargar la página
+    populateDayFilter();
     renderAll();
   </script>
 </body>
