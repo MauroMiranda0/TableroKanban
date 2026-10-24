@@ -2,1167 +2,1161 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Tablero Kanban y Checklist de Ejecución (18 Días)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Ejecución por Ciclos de 15 Días (TEA/TDA)</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .kanban-col {
-      min-height: 220px;
-      max-height: calc(100vh - 280px);
-      overflow-y: auto;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
-    }
-    @media (max-width: 767px) {
-      .kanban-col {
-        max-height: none;
-        min-height: 140px;
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti for dopamine reward -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            teaDark: {
+              900: '#0c111d',
+              800: '#151e2e',
+              700: '#1e2b40',
+              600: '#2d3e58',
+              accent: '#38bdf8'
+            }
+          }
+        }
       }
     }
-    .kanban-col.drag-over {
-      background-color: #f1f5f9;
-      border-color: #3b82f6;
+  </script>
+  <style>
+    /* Estilos para impresión limpia de la To-Do */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-area, #print-area * {
+        visibility: visible;
+      }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
     }
-    .task-card {
-      cursor: grab;
-      user-select: none;
-      touch-action: pan-y;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    /* Scrollbars suaves para evitar fricción sensorial */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
-    .task-card:active {
-      cursor: grabbing;
-      transform: scale(0.99);
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
     }
-    .task-card.dragging {
-      opacity: 0.35;
-    }
-    .custom-scroll::-webkit-scrollbar,
-    .kanban-col::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    .custom-scroll::-webkit-scrollbar-track,
-    .kanban-col::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .custom-scroll::-webkit-scrollbar-thumb,
-    .kanban-col::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 9999px;
-    }
-    /* Estilos para badges de días seleccionables en el modal */
-    .day-pill-checkbox:checked + label {
-      background-color: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
-    }
-    /* Estilo para selector de prioridad */
-    .priority-radio:checked + label {
-      border-color: currentColor;
-      box-shadow: 0 0 0 1.5px currentColor;
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.3);
+      border-radius: 4px;
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+<body class="bg-slate-50 dark:bg-teaDark-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 antialiased font-sans">
 
-  <!-- Header Sticky & Responsive -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+  <!-- BARRA SUPERIOR / HEADER -->
+  <header class="no-print sticky top-0 z-40 bg-white/90 dark:bg-teaDark-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       
-      <!-- Brand & Título -->
-      <div class="flex items-center justify-between gap-2">
+      <!-- Título & Ciclo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold text-lg border border-sky-500/20">
+          15d
+        </div>
         <div>
-          <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-layer-group text-blue-600 text-lg sm:text-2xl"></i>
-            <span>Sistema de Ejecución</span>
-            <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 shrink-0">18 Días</span>
+          <h1 class="text-base sm:text-lg font-bold leading-tight flex items-center gap-2">
+            Sistema de Ciclos
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">TEA/TDA Friendly</span>
           </h1>
-          <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Gestión, control de foco y sincronización viva</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Baja carga ejecutiva · Continuidad · Buffers cada 4 días</p>
         </div>
       </div>
 
-      <!-- Barra de Controles adaptativa -->
-      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-between md:justify-end">
-        
-        <!-- Botón Nueva Tarea (CRUD) -->
-        <button id="btnNewTask" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition flex items-center gap-1.5 shrink-0">
-          <i class="fa-solid fa-plus text-xs"></i> <span>Nueva Tarea</span>
-        </button>
-
-        <!-- Toggle Vistas Kanban / Checklist -->
-        <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shrink-0">
-          <button id="viewTabKanban" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm">
-            <i class="fa-solid fa-table-columns"></i> <span>Kanban</span>
-          </button>
-          <button id="viewTabChecklist" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-list-check"></i> <span>Checklist</span>
-          </button>
-        </div>
-
-        <!-- Filtro Día -->
-        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 shrink-0 flex-1 sm:flex-initial min-w-[200px] max-w-full sm:max-w-md">
-          <label for="dayFilter" class="text-[11px] font-bold uppercase tracking-wider text-slate-600 shrink-0">Día:</label>
-          <select id="dayFilter" class="w-full bg-white text-xs font-semibold rounded px-2 py-1 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 truncate">
-            <option value="all">Todos los Días (Ciclo completo de 18 días)</option>
+      <!-- Selector de Ciclos y Acciones -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <!-- Selector Ciclo -->
+        <div class="flex items-center bg-slate-100 dark:bg-teaDark-700 rounded-lg p-1 border border-slate-200 dark:border-slate-600 text-xs font-semibold">
+          <label for="cycleSelect" class="px-2 text-slate-500 dark:text-slate-400">Ciclo:</label>
+          <select id="cycleSelect" onchange="app.switchCycle(this.value)" class="bg-transparent text-slate-800 dark:text-slate-100 font-bold focus:outline-none cursor-pointer pr-1">
+            <option value="1">Ciclo 1 (Base)</option>
+            <option value="2">Ciclo 2 (Siguiente)</option>
+            <option value="3">Ciclo 3 (Expansión)</option>
           </select>
         </div>
 
-        <!-- Reset -->
-        <button id="btnReset" title="Reiniciar datos al estado inicial" class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-transparent transition shrink-0">
-          <i class="fa-solid fa-arrow-rotate-left"></i>
+        <!-- Temporizador Rápido Botón -->
+        <button onclick="app.toggleTimerModal()" class="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-medium flex items-center gap-1.5 transition">
+          <i data-lucide="timer" class="w-4 h-4"></i>
+          <span id="timerPill">Pomodoro (25m)</span>
+        </button>
+
+        <!-- Crear Tarea Botón -->
+        <button onclick="app.openTaskModal()" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nueva Tarea</span>
+        </button>
+
+        <!-- Modo Oscuro / Claro -->
+        <button onclick="app.toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-teaDark-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-teaDark-600 transition" title="Cambiar tema">
+          <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+          <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
         </button>
       </div>
+
+    </div>
+
+    <!-- Pestañas de Navegación -->
+    <div class="max-w-7xl mx-auto mt-3 flex items-center gap-1 overflow-x-auto text-xs sm:text-sm font-medium border-t border-slate-200 dark:border-slate-800/60 pt-2">
+      <button onclick="app.switchView('kanban')" id="tab-kanban" class="tab-btn px-3 py-1.5 rounded-md text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-teaDark-700/60 font-semibold flex items-center gap-2 transition">
+        <i data-lucide="trello" class="w-4 h-4"></i> Tablero Kanban
+      </button>
+      <button onclick="app.switchView('calendar')" id="tab-calendar" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 transition">
+        <i data-lucide="calendar" class="w-4 h-4"></i> Calendario 15 Días
+      </button>
+      <button onclick="app.switchView('todo')" id="tab-todo" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 transition">
+        <i data-lucide="check-square" class="w-4 h-4"></i> To-Do Imprimible
+      </button>
+      <button onclick="app.switchView('buffers')" id="tab-buffers" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 transition">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Buffers & Tareas Ligeras
+      </button>
+      <button onclick="app.switchView('ritual')" id="tab-ritual" class="tab-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 transition">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> Cierre Ritual Diario
+      </button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto p-4 sm:p-6 pb-24">
 
-    <!-- Leyenda de Bloques de Tiempo -->
-    <section class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm">
-      <div class="flex items-center justify-between mb-2 sm:mb-3">
-        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Leyenda de Bloques de Tiempo</h2>
-        <span class="text-[10px] text-slate-400 sm:hidden flex items-center gap-1"><i class="fa-solid fa-arrows-left-right"></i> Desliza</span>
-      </div>
+    <!-- 1. VISTA TABLERO KANBAN -->
+    <section id="view-kanban" class="view-panel block">
       
-      <div class="flex sm:grid sm:grid-cols-3 md:grid-cols-6 gap-2.5 overflow-x-auto custom-scroll pb-1 sm:pb-0 snap-x">
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-emerald-50 border border-emerald-100 shrink-0 min-w-[140px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-play text-[10px]"></i>
+      <!-- Principios / Barra sensorial baja -->
+      <div class="mb-4 bg-sky-50 dark:bg-teaDark-800/70 border border-sky-100 dark:border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between text-xs text-slate-600 dark:text-slate-300 gap-2">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+            <i data-lucide="shield-check" class="w-4 h-4"></i> Reglas de Oro:
+          </span>
+          <span>🟢 Arranque primero (5-10m)</span>
+          <span>🔵 Máx 2 profundos/día</span>
+          <span>🔄 Buffers cada 4 días</span>
+          <span>🧘 Descanso sin pantalla</span>
+        </div>
+        <div class="text-slate-400 text-xs">Arrastra o pulsa flechas para mover tarjetas</div>
+      </div>
+
+      <!-- Columnas Kanban -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+        
+        <!-- Columna 1: POR HACER -->
+        <div class="bg-slate-100/80 dark:bg-teaDark-800 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 flex flex-col min-h-[480px]">
+          <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 dark:border-slate-700/60 px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+              <h3 class="font-bold text-sm tracking-wide">POR HACER</h3>
+            </div>
+            <span id="count-todo" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-teaDark-700 text-slate-700 dark:text-slate-300 font-mono font-bold">0</span>
           </div>
-          <div>
-            <div class="text-xs font-bold text-emerald-900 leading-tight">Arranque</div>
-            <div class="text-[10px] text-emerald-700 font-medium">5-10 min</div>
+          <div id="col-todo" ondragover="app.handleDragOver(event)" ondrop="app.handleDrop(event, 'todo')" class="kanban-col flex-1 space-y-2.5">
+            <!-- Tarjetas inyectadas por JS -->
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-blue-50 border border-blue-100 shrink-0 min-w-[150px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-filter text-[10px]"></i>
+        <!-- Columna 2: EN CURSO -->
+        <div class="bg-amber-50/50 dark:bg-teaDark-800/90 rounded-2xl p-3 border border-amber-200/60 dark:border-amber-900/40 flex flex-col min-h-[480px]">
+          <div class="flex items-center justify-between pb-3 mb-2 border-b border-amber-200/60 dark:border-slate-700/60 px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
+              <h3 class="font-bold text-sm tracking-wide text-amber-900 dark:text-amber-200">EN CURSO</h3>
+            </div>
+            <span id="count-inprogress" class="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono font-bold">0</span>
           </div>
-          <div>
-            <div class="text-xs font-bold text-blue-900 leading-tight">Profundo</div>
-            <div class="text-[10px] text-blue-700 font-medium">50 min (Máx 2/d)</div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-amber-50 border border-amber-100 shrink-0 min-w-[130px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-scale-balanced text-[10px]"></i>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-amber-900 leading-tight">Medio</div>
-            <div class="text-[10px] text-amber-700 font-medium">25 min</div>
+          <p class="text-[11px] text-amber-800/80 dark:text-amber-300/70 mb-2 px-1">💡 Recomendación: Mantén sólo 1 tarjeta aquí.</p>
+          <div id="col-inprogress" ondragover="app.handleDragOver(event)" ondrop="app.handleDrop(event, 'inprogress')" class="kanban-col flex-1 space-y-2.5">
+            <!-- Tarjetas inyectadas por JS -->
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 shrink-0 min-w-[125px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-feather text-[10px]"></i>
+        <!-- Columna 3: EN BUFFER -->
+        <div class="bg-indigo-50/50 dark:bg-teaDark-800 rounded-2xl p-3 border border-indigo-200/60 dark:border-indigo-900/40 flex flex-col min-h-[480px]">
+          <div class="flex items-center justify-between pb-3 mb-2 border-b border-indigo-200/60 dark:border-slate-700/60 px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+              <h3 class="font-bold text-sm tracking-wide text-indigo-900 dark:text-indigo-200">EN BUFFER 🔄</h3>
+            </div>
+            <span id="count-buffer" class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 font-mono font-bold">0</span>
           </div>
-          <div>
-            <div class="text-xs font-bold text-slate-800 leading-tight">Ligero</div>
-            <div class="text-[10px] text-slate-600 font-medium">Rápido</div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-sky-50 border border-sky-100 shrink-0 min-w-[145px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-sky-900 leading-tight">Buffer</div>
-            <div class="text-[10px] text-sky-700 font-medium">Días 4, 8, 12, 16</div>
+          <p class="text-[11px] text-indigo-800/80 dark:text-indigo-300/70 mb-2 px-1">Para tareas atrasadas o ligeras de mantenimiento.</p>
+          <div id="col-buffer" ondragover="app.handleDragOver(event)" ondrop="app.handleDrop(event, 'buffer')" class="kanban-col flex-1 space-y-2.5">
+            <!-- Tarjetas inyectadas por JS -->
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-purple-50 border border-purple-100 shrink-0 min-w-[135px] sm:min-w-0 snap-start">
-          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <i class="fa-solid fa-spa text-[10px]"></i>
+        <!-- Columna 4: HECHO -->
+        <div class="bg-emerald-50/50 dark:bg-teaDark-800 rounded-2xl p-3 border border-emerald-200/60 dark:border-emerald-900/40 flex flex-col min-h-[480px]">
+          <div class="flex items-center justify-between pb-3 mb-2 border-b border-emerald-200/60 dark:border-slate-700/60 px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <h3 class="font-bold text-sm tracking-wide text-emerald-900 dark:text-emerald-200">HECHO</h3>
+            </div>
+            <span id="count-done" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono font-bold">0</span>
           </div>
-          <div>
-            <div class="text-xs font-bold text-purple-900 leading-tight">Cierre</div>
-            <div class="text-[10px] text-purple-700 font-medium">5 min ritual</div>
+          <div id="col-done" ondragover="app.handleDragOver(event)" ondrop="app.handleDrop(event, 'done')" class="kanban-col flex-1 space-y-2.5">
+            <!-- Tarjetas inyectadas por JS -->
           </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. VISTA CALENDARIO 15 DÍAS -->
+    <section id="view-calendar" class="view-panel hidden">
+      <div class="bg-white dark:bg-teaDark-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 mb-6">
+        <h2 class="text-lg font-bold mb-2 flex items-center gap-2">
+          <i data-lucide="calendar-range" class="w-5 h-5 text-sky-500"></i>
+          Línea de Tiempo del Ciclo de 15 Días
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          Cada ciclo alterna bloques de ejecución con amortiguadores (buffers) estratégicos cada 4 días para evitar el colapso.
+        </p>
+
+        <!-- Leyenda -->
+        <div class="flex flex-wrap gap-2 text-xs mb-6 p-3 bg-slate-50 dark:bg-teaDark-700/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <span class="inline-flex items-center gap-1 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 🟢 Arranque (5-10 min)</span>
+          <span class="inline-flex items-center gap-1 font-medium ml-2"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> 🔵 Profundo (50 min)</span>
+          <span class="inline-flex items-center gap-1 font-medium ml-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 🟡 Medio (25 min)</span>
+          <span class="inline-flex items-center gap-1 font-medium ml-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> ⚪ Ligero (10-15 min)</span>
+          <span class="inline-flex items-center gap-1 font-medium ml-2"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 🔄 Buffer (Recuperación)</span>
+          <span class="inline-flex items-center gap-1 font-medium ml-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> 🧘 Cierre/Pausa</span>
+        </div>
+
+        <!-- Timeline Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="calendarGrid">
+          <!-- Generado dinámicamente con los 15 días -->
         </div>
       </div>
     </section>
 
-    <!-- Selector de columnas en móvil -->
-    <div id="mobileColumnSelector" class="flex md:hidden bg-slate-200/80 p-1 rounded-xl text-xs font-bold gap-1 overflow-x-auto custom-scroll">
-      <button data-col-target="todo" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg bg-white text-slate-800 shadow-xs whitespace-nowrap text-center">
-        Por Hacer (<span id="m-badge-todo">0</span>)
-      </button>
-      <button data-col-target="inprogress" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
-        En Curso (<span id="m-badge-inprogress">0</span>)
-      </button>
-      <button data-col-target="buffer" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
-        Buffer (<span id="m-badge-buffer">0</span>)
-      </button>
-      <button data-col-target="done" class="mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 whitespace-nowrap text-center">
-        Hecho (<span id="m-badge-done">0</span>)
-      </button>
-    </div>
-
-    <!-- VISTA 1: TABLERO KANBAN -->
-    <section id="kanbanSection" class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
-      <!-- POR HACER -->
-      <div id="wrapper-todo" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col">
-        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-slate-700 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Por Hacer
-          </span>
-          <span id="badge-todo" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 font-bold text-slate-600">0</span>
-        </div>
-        <div id="col-todo" data-status="todo" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
-      </div>
-
-      <!-- EN CURSO -->
-      <div id="wrapper-inprogress" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
-        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-blue-700 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span> En Curso
-          </span>
-          <span id="badge-inprogress" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 font-bold text-blue-700">0</span>
-        </div>
-        <div id="col-inprogress" data-status="inprogress" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
-      </div>
-
-      <!-- EN BUFFER -->
-      <div id="wrapper-buffer" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
-        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-sky-700 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> En Buffer
-          </span>
-          <span id="badge-buffer" class="text-xs px-2 py-0.5 rounded-full bg-sky-100 font-bold text-sky-700">0</span>
-        </div>
-        <div id="col-buffer" data-status="buffer" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
-      </div>
-
-      <!-- HECHO -->
-      <div id="wrapper-done" class="kanban-wrapper bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm flex flex-col hidden md:flex">
-        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-          <span class="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-emerald-700 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hecho
-          </span>
-          <span id="badge-done" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 font-bold text-emerald-700">0</span>
-        </div>
-        <div id="col-done" data-status="done" class="kanban-col flex-1 space-y-2.5 sm:space-y-3 p-0.5 rounded-xl"></div>
-      </div>
-    </section>
-
-    <!-- VISTA 2: CHECKLIST (TO-DO LIST) -->
-    <section id="checklistSection" class="hidden space-y-3 sm:space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+    <!-- 3. VISTA TO-DO IMPRIMIBLE -->
+    <section id="view-todo" class="view-panel hidden">
+      <div class="flex justify-between items-center mb-4 no-print">
         <div>
-          <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-blue-600"></i> Checklist Integral de Tareas
-          </h3>
-          <p class="text-xs text-slate-500">Marca, edita o elimina tareas en tiempo real.</p>
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="printer" class="w-5 h-5 text-sky-500"></i>
+            Lista To-Do Imprimible
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Optimizada para papel físico. Marca tus casillas analógicamente si prefieres descansar de la pantalla.
+          </p>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 whitespace-nowrap">
-            Progreso: <span id="checklist-progress-text" class="font-bold text-blue-600">0%</span>
-          </div>
-          <div class="w-28 sm:w-36 bg-slate-200 h-2.5 rounded-full overflow-hidden">
-            <div id="checklist-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-          </div>
-        </div>
+        <button onclick="window.print()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-bold rounded-xl flex items-center gap-2 shadow transition">
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Lista
+        </button>
       </div>
 
-      <div id="checklistContainer" class="space-y-3 sm:space-y-4"></div>
-    </section>
-
-    <!-- Cierre Ritual Diario y Reglas Clave -->
-    <section class="bg-slate-100/90 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
-      <h3 class="text-center font-bold text-slate-800 text-sm sm:text-base mb-3 sm:mb-4 tracking-tight">Cierre Ritual Diario y Reglas Clave</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-        <div class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200">
-          <h4 class="text-xs sm:text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
-            <i class="fa-solid fa-moon text-purple-600"></i> Cierre Ritual Diario (5 min)
-          </h4>
-          <ul class="space-y-2 text-xs text-slate-600">
-            <li class="flex items-start gap-2.5">
-              <input type="checkbox" id="check1" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
-              <label for="check1" class="cursor-pointer select-none leading-snug">Revisa lo avanzado en la jornada.</label>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <input type="checkbox" id="check2" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
-              <label for="check2" class="cursor-pointer select-none leading-snug">Mueve tarjetas completadas a <strong>"Hecho"</strong>.</label>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <input type="checkbox" id="check3" class="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4">
-              <label for="check3" class="cursor-pointer select-none leading-snug">Define con precisión la primera tarea de mañana.</label>
-            </li>
-          </ul>
+      <div id="print-area" class="bg-white dark:bg-teaDark-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="border-b border-slate-300 pb-4 mb-6">
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">📘 Documento Maestro — Checklist Ciclo 1</h1>
+          <p class="text-xs text-slate-600 dark:text-slate-300">Organización neurodivergente TEA/TDA · Bloques cortos y continuos</p>
         </div>
 
-        <div class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200">
-          <h4 class="text-xs sm:text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-amber-500"></i> Reglas de Buffers y Ejecución
-          </h4>
-          <div class="space-y-2 text-xs text-slate-600 leading-snug">
-            <div class="flex items-start gap-2">
-              <span class="text-base shrink-0">🧘</span>
-              <span><strong>Máximo 2 Bloques Profundos Diarios:</strong> limita a 50 min cada uno para prevenir fatiga cognitiva.</span>
+        <div id="printableTasksContainer" class="space-y-6">
+          <!-- Agrupado por proyectos generado dinámicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. VISTA BUFFERS & TAREAS LIGERAS -->
+    <section id="view-buffers" class="view-panel hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+        
+        <div class="bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60 rounded-2xl p-5">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="p-2 bg-indigo-500 text-white rounded-xl">
+              <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
             </div>
-            <div class="flex items-start gap-2">
-              <span class="text-base shrink-0">🔄</span>
-              <span><strong>Buffers de Recuperación (Días 4, 8, 12, 16):</strong> usados estrictamente para recuperar atrasos o descansar, <em>NUNCA para adelantar trabajo</em>.</span>
+            <div>
+              <h2 class="text-base font-bold text-indigo-950 dark:text-indigo-200">Protocolo de Buffers: El Secreto Anti-Colapso</h2>
+              <p class="text-xs text-indigo-800/80 dark:text-indigo-300/80">"El sistema asume que algo fallará. No es fracaso, es diseño."</p>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-3 gap-3 text-xs mt-4">
+            <div class="p-3 bg-white/70 dark:bg-teaDark-800 rounded-xl border border-indigo-100 dark:border-indigo-900">
+              <span class="font-bold text-indigo-700 dark:text-indigo-300 block mb-1">1. Recuperar</span>
+              Si tienes pendientes atrasados de los días anteriores, termínalos aquí sin culpa.
+            </div>
+            <div class="p-3 bg-white/70 dark:bg-teaDark-800 rounded-xl border border-indigo-100 dark:border-indigo-900">
+              <span class="font-bold text-indigo-700 dark:text-indigo-300 block mb-1">2. No Adelantar</span>
+              NUNCA uses el buffer para empezar tareas futuras ni abrir frentes nuevos.
+            </div>
+            <div class="p-3 bg-white/70 dark:bg-teaDark-800 rounded-xl border border-indigo-100 dark:border-indigo-900">
+              <span class="font-bold text-indigo-700 dark:text-indigo-300 block mb-1">3. Mantenimiento o Relax</span>
+              Si estás al día: ejecuta una tarea ligera de 10-15 min o tómate el día para descansar.
             </div>
           </div>
         </div>
+
+        <!-- Días de buffer específicos -->
+        <div class="grid sm:grid-cols-2 gap-4">
+          
+          <!-- Día 4 -->
+          <div class="bg-white dark:bg-teaDark-800 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+              <span class="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">Día 4 — Buffer 1</span>
+              <span class="text-xs text-slate-400">Tras Jocelyn + Upwork</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">Opciones si no hay atrasos:</p>
+            <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300">
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-sky-500">⚪ A (Orden):</span> Actualizar tracker visible + revisar parking lot.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-slate-400">⚪ B (Prep):</span> Crear carpeta/nota vacía para Día 6 (TDD-SDD).
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-emerald-500">⚪ C (Bajo costo):</span> Pausa sin pantalla 10 min + archivar notificaciones.
+              </li>
+            </ul>
+            <div class="mt-3 text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">✨ Recomendada: A</div>
+          </div>
+
+          <!-- Día 8 -->
+          <div class="bg-white dark:bg-teaDark-800 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+              <span class="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">Día 8 — Buffer 2</span>
+              <span class="text-xs text-slate-400">Tras Upwork + TDD + Docs</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">Opciones si no hay atrasos:</p>
+            <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300">
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-sky-500">⚪ A (Orden):</span> Actualizar tracker + verificar plantilla de Spec guardada.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-slate-400">⚪ B (Prep):</span> Abrir plantilla de Postmortem vacía del Día 9.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-emerald-500">⚪ C (Bajo costo):</span> Cerrar pestañas de código + 10 min de pausa.
+              </li>
+            </ul>
+            <div class="mt-3 text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">✨ Recomendada: A (o B si cuesta arrancar D9)</div>
+          </div>
+
+          <!-- Día 12 -->
+          <div class="bg-white dark:bg-teaDark-800 border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+              <span class="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">Día 12 — Buffer 3</span>
+              <span class="text-xs text-slate-400">Tras Documentación + IWM</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">Opciones si no hay atrasos:</p>
+            <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300">
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-sky-500">⚪ A (Orden):</span> Revisar enlaces Specs/Postmortems + tracker IWM.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-slate-400">⚪ B (Prep):</span> Definir las 3 categorías del blog en borrador rápido.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-emerald-500">⚪ C (Bajo costo):</span> Verificar enlaces rotos IWM + 10 min descanso.
+              </li>
+            </ul>
+            <div class="mt-3 text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">✨ Recomendada: A (y si sobra energía, B)</div>
+          </div>
+
+          <!-- Día 15 -->
+          <div class="bg-white dark:bg-teaDark-800 border-2 border-indigo-300 dark:border-indigo-600 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+              <span class="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold">Día 15 — Cierre de Ciclo</span>
+              <span class="text-xs text-indigo-500 font-semibold">Buffer Final + Plan</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">Tareas obligatorias de cierre:</p>
+            <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300">
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-indigo-500">🟡 Revisión (25m):</span> Qué quedó hecho, a medias o sin tocar.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-sky-500">🟡 Plan Ciclo 2 (25m):</span> Mover tareas a Ciclo 2 y definir día 1.
+              </li>
+              <li class="p-2 rounded-lg bg-slate-50 dark:bg-teaDark-700/60 border border-slate-100 dark:border-slate-700 flex items-start gap-2">
+                <span class="font-bold text-purple-500">🧘 Descanso:</span> Pausa real para recargar batería cognitiva.
+              </li>
+            </ul>
+            <div class="mt-3 text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">✨ Recomendada: A + Planificación obligatoria</div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. VISTA CIERRE RITUAL DIARIO & CIERRE DE CICLO -->
+    <section id="view-ritual" class="view-panel hidden">
+      <div class="max-w-3xl mx-auto space-y-6">
+        
+        <!-- Checklist Diario -->
+        <div class="bg-white dark:bg-teaDark-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-bold">Ritual Diario de Cierre (5 Minutos)</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Desactiva la hipervigilancia cerrando los ciclos abiertos antes de dormir.</p>
+            </div>
+          </div>
+
+          <form id="dailyRitualForm" onsubmit="app.saveDailyRitual(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">1. ¿Qué avanzó hoy con éxito? (1 línea)</label>
+              <input type="text" id="rit-advanced" placeholder="Ej: Terminé la bio de Upwork y la dejé guardada..." class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500 text-xs">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">2. ¿Qué quedó a medias? (¿Va al buffer más cercano?)</label>
+              <input type="text" id="rit-half" placeholder="Ej: Faltó subir 1 portafolio -> Lo paso al Buffer del Día 8." class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500 text-xs">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">3. ¿Cuál es la PRIMERA tarea de mañana para romper la inercia? (Arranque 🟢 5-10 min)</label>
+              <input type="text" id="rit-next" placeholder="Ej: Abrir archivo index.html y escribir 1 línea..." class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500 text-xs">
+            </div>
+
+            <!-- Mini Checklist interactivo -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="rit-cb-kanban" class="rounded text-sky-500 focus:ring-0">
+                <span>Mover tarjetas correspondientes al tablero Kanban</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="rit-cb-tabs" class="rounded text-sky-500 focus:ring-0">
+                <span>Cerrar pestañas y archivos innecesarios de hoy</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="rit-cb-rest" class="rounded text-sky-500 focus:ring-0 font-medium text-emerald-600 dark:text-emerald-400">
+                <span>Descanso real inmediato (sin pantallas)</span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <span id="ritualSavedNotice" class="text-emerald-600 dark:text-emerald-400 text-xs hidden font-medium">✓ Guardado en tu almacenamiento local</span>
+              <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 ml-auto">
+                <i data-lucide="check" class="w-4 h-4"></i> Guardar Cierre Diario
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Checklist Cierre de Ciclo (Día 15) -->
+        <div class="bg-indigo-50/50 dark:bg-teaDark-800 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-900 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-bold">
+              15
+            </div>
+            <div>
+              <h2 class="text-base font-bold">Cierre Ritual del Ciclo Completo (Día 15)</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Evaluación sin juicio y preparación suave del siguiente ciclo de 15 días.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-xs text-slate-700 dark:text-slate-300">
+            <div class="p-3 bg-white dark:bg-teaDark-700 rounded-xl border border-slate-200 dark:border-slate-600">
+              <strong>1. Balance del Ciclo:</strong> Revisa la columna "HECHO". Cada tarjeta terminada representó resistencia ejecutiva superada.
+            </div>
+            <div class="p-3 bg-white dark:bg-teaDark-700 rounded-xl border border-slate-200 dark:border-slate-600">
+              <strong>2. Reubicar sin culpa:</strong> Lo no concluido no es fracaso. Selecciónalo y pásalo al <em>Ciclo 2</em> usando el editor de tareas.
+            </div>
+            <div class="p-3 bg-white dark:bg-teaDark-700 rounded-xl border border-slate-200 dark:border-slate-600">
+              <strong>3. Configurar Ciclo 2:</strong> Activa el Ciclo 2 en la barra superior (Instagram, página FB personal, blog 'Mirada sin Filtros', orden de chats).
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
   </main>
 
-  <!-- ==================== MODAL DE CREAR / EDITAR TAREA ==================== -->
-  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200">
-    <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95">
-      
-      <!-- Modal Header -->
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <h3 id="modalTitle" class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-pen-to-square text-blue-600"></i>
-          <span>Crear Nueva Tarea</span>
-        </h3>
-        <button id="btnCancelModal" class="text-slate-400 hover:text-slate-600 rounded-lg p-1.5 transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
+  <!-- MODAL: TEMPORIZADOR POMODORO (Sin fricción, integrado) -->
+  <div id="timerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-teaDark-800 rounded-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-700 shadow-2xl text-center">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-xs font-bold text-sky-500 uppercase tracking-widest flex items-center gap-1">
+          <i data-lucide="clock" class="w-3.5 h-3.5"></i> Foco Ejecutable
+        </span>
+        <button onclick="app.toggleTimerModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- Modal Body (Formulario) -->
-      <form id="taskForm" class="p-5 overflow-y-auto space-y-4 custom-scroll text-xs">
-        <input type="hidden" id="taskEditId" value="">
+      <div class="text-5xl font-mono font-bold my-4 text-slate-900 dark:text-white" id="timerDisplay">25:00</div>
+      <p id="timerModeLabel" class="text-xs text-slate-500 dark:text-slate-400 mb-6">Bloque estándar (25 min)</p>
 
-        <!-- Título / Descripción de la tarea -->
+      <!-- Presets de Bloques -->
+      <div class="grid grid-cols-4 gap-1.5 mb-6 text-xs">
+        <button onclick="app.setTimerPreset(10, '🟢 Arranque (10 min)')" class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">10m</button>
+        <button onclick="app.setTimerPreset(25, '🟡 Pomodoro (25 min)')" class="p-2 rounded-lg bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold border border-sky-200 dark:border-sky-800">25m</button>
+        <button onclick="app.setTimerPreset(50, '🔵 Profundo (50 min)')" class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-200 dark:border-indigo-800">50m</button>
+        <button onclick="app.setTimerPreset(5, '🧘 Pausa (5 min)')" class="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 font-bold border border-purple-200 dark:border-purple-800">5m</button>
+      </div>
+
+      <!-- Controles -->
+      <div class="flex items-center justify-center gap-3">
+        <button id="timerToggleBtn" onclick="app.toggleTimer()" class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm flex items-center gap-2 shadow-md transition">
+          <i data-lucide="play" class="w-4 h-4"></i> Iniciar
+        </button>
+        <button onclick="app.resetTimer()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-teaDark-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR NUEVA TAREA / MICRONTAREA -->
+  <div id="taskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-teaDark-800 rounded-2xl p-6 max-w-lg w-full border border-slate-200 dark:border-slate-700 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-sky-500"></i>
+          Nueva Microtarea / Bloque
+        </h3>
+        <button onclick="app.closeTaskModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="newTaskForm" onsubmit="app.handleCreateTask(event)" class="space-y-4 text-xs">
         <div>
-          <label for="taskTitle" class="block font-bold text-slate-700 mb-1">Título de la Tarea <span class="text-rose-500">*</span></label>
-          <input type="text" id="taskTitle" required placeholder="Ej. Implementar autenticación o redactar propuesta..." class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Proyecto o Área Relacionada</label>
+          <input type="text" id="newTaskProject" required placeholder="Ej. Upwork, Jocelyn, Mirada sin Filtros, Personal..." class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500">
         </div>
 
-        <!-- Fila 1: Proyecto y Número de Pendiente -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label for="taskProject" class="block font-bold text-slate-700 mb-1">Proyecto o Área <span class="text-rose-500">*</span></label>
-            <input type="text" id="taskProject" required placeholder="Ej. Proyecto Jocelyn, Upwork..." class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          <div>
-            <label for="taskPendingNum" class="block font-bold text-slate-700 mb-1">Nº Pendiente / Tag</label>
-            <input type="text" id="taskPendingNum" placeholder="Ej. 1, 2, Cierre, General" class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Descripción de la microtarea ("Terminado cuando...")</label>
+          <textarea id="newTaskTitle" required rows="2" placeholder="Ej. Abrir documento de Word y escribir el índice básico..." class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500"></textarea>
         </div>
 
-        <!-- Fila 2: Tipo de Bloque y Duración -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="taskBlock" class="block font-bold text-slate-700 mb-1">Tipo de Bloque</label>
-            <select id="taskBlock" class="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="Arranque">Arranque (5-10 min)</option>
-              <option value="Profundo">Profundo (50 min)</option>
-              <option value="Medio">Medio (25 min)</option>
-              <option value="Ligero">Ligero (Rápido)</option>
-              <option value="Buffer">Buffer (Recuperación)</option>
-              <option value="Cierre">Cierre (Ritual)</option>
+            <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Tipo de Bloque</label>
+            <select id="newTaskType" class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none">
+              <option value="start">🟢 Arranque (5-10 min)</option>
+              <option value="deep">🔵 Profundo (50 min)</option>
+              <option value="medium">🟡 Medio (25 min)</option>
+              <option value="light">⚪ Ligero (10-15 min)</option>
+              <option value="buffer">🔄 Tarea de Buffer</option>
             </select>
           </div>
+
           <div>
-            <label for="taskDuration" class="block font-bold text-slate-700 mb-1">Duración Estimada</label>
-            <input type="text" id="taskDuration" placeholder="Ej. 10 min, 25 min, 50 min" class="w-full text-xs font-medium px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Duración (minutos)</label>
+            <input type="number" id="newTaskDuration" value="25" min="5" max="120" step="5" class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none">
           </div>
         </div>
 
-        <!-- Fila 3: Prioridad y Estado -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Prioridad de la Tarea</label>
-            <div class="grid grid-cols-4 gap-1.5" id="priorityOptions">
-              <div>
-                <input type="radio" name="taskPriority" id="prio-low" value="low" class="priority-radio sr-only">
-                <label for="prio-low" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 cursor-pointer transition select-none">
-                  <i class="fa-solid fa-arrow-down text-[10px] text-emerald-600 mb-0.5"></i>
-                  <span class="text-[10px] font-bold">Baja</span>
-                </label>
-              </div>
-              <div>
-                <input type="radio" name="taskPriority" id="prio-medium" value="medium" class="priority-radio sr-only" checked>
-                <label for="prio-medium" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-blue-700 cursor-pointer transition select-none">
-                  <i class="fa-solid fa-minus text-[10px] text-blue-500 mb-0.5"></i>
-                  <span class="text-[10px] font-bold">Media</span>
-                </label>
-              </div>
-              <div>
-                <input type="radio" name="taskPriority" id="prio-high" value="high" class="priority-radio sr-only">
-                <label for="prio-high" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-amber-700 cursor-pointer transition select-none">
-                  <i class="fa-solid fa-arrow-up text-[10px] text-amber-500 mb-0.5"></i>
-                  <span class="text-[10px] font-bold">Alta</span>
-                </label>
-              </div>
-              <div>
-                <input type="radio" name="taskPriority" id="prio-urgent" value="urgent" class="priority-radio sr-only">
-                <label for="prio-urgent" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-rose-700 cursor-pointer transition select-none">
-                  <i class="fa-solid fa-triangle-exclamation text-[10px] text-rose-500 mb-0.5"></i>
-                  <span class="text-[10px] font-bold">Urgente</span>
-                </label>
-              </div>
-            </div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Día asignado (1 a 15)</label>
+            <input type="number" id="newTaskDay" value="1" min="1" max="15" class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none">
           </div>
+
           <div>
-            <label for="taskStatus" class="block font-bold text-slate-700 mb-1">Estado de la Tarea</label>
-            <select id="taskStatus" class="w-full text-xs font-semibold px-3 py-2 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="todo">Por Hacer</option>
-              <option value="inprogress">En Curso</option>
-              <option value="buffer">En Buffer</option>
-              <option value="done">Hecho</option>
+            <label class="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Asignar a Ciclo</label>
+            <select id="newTaskCycle" class="w-full bg-slate-50 dark:bg-teaDark-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 focus:outline-none">
+              <option value="1">Ciclo 1 (Actual)</option>
+              <option value="2">Ciclo 2</option>
+              <option value="3">Ciclo 3</option>
             </select>
           </div>
         </div>
 
-        <!-- Selección de Días (1 al 18) -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block font-bold text-slate-700">Días asignados (Ciclo 1 al 18):</label>
-            <div class="flex gap-2 text-[10px]">
-              <button type="button" id="btnSelectAllDays" class="text-blue-600 hover:underline">Todos</button>
-              <span>·</span>
-              <button type="button" id="btnClearDays" class="text-slate-500 hover:underline">Limpiar</button>
-            </div>
-          </div>
-          <div id="daysCheckboxContainer" class="grid grid-cols-6 sm:grid-cols-9 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-            <!-- Se generará dinámicamente con checkboxes estilizados -->
-          </div>
-          <p id="daysValidationMsg" class="text-[11px] text-rose-500 font-medium mt-1 hidden">Debes seleccionar al menos un día.</p>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-          <button type="button" id="btnCancelModalBottom" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
-            Cancelar
-          </button>
-          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition flex items-center gap-1.5">
-            <i class="fa-solid fa-floppy-disk"></i> Guardar Tarea
+        <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-700">
+          <button type="button" onclick="app.closeTaskModal()" class="px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-teaDark-700">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Crear Tarjeta
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Diálogo Modal de Confirmación para Eliminar -->
-  <div id="deleteConfirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
-    <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 p-5 text-center">
-      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3 text-lg">
-        <i class="fa-solid fa-trash-can"></i>
-      </div>
-      <h4 class="text-base font-extrabold text-slate-900 mb-1">¿Eliminar tarea?</h4>
-      <p id="deleteConfirmText" class="text-xs text-slate-500 mb-5 leading-relaxed">Esta acción no se puede deshacer.</p>
-      <div class="flex items-center justify-center gap-2">
-        <button id="btnCancelDelete" class="w-1/2 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
-          Cancelar
-        </button>
-        <button id="btnConfirmDelete" class="w-1/2 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition">
-          Sí, eliminar
-        </button>
-      </div>
-    </div>
-  </div>
-
+  <!-- SCRIPT CON TODA LA LÓGICA Y DATOS INICIALES DEL DOCUMENTO MAESTRO -->
   <script>
+    // Tareas maestras precargadas según el documento para el Ciclo 1 y siguientes
     const INITIAL_TASKS = [
-      { id: 1, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir proyecto y listar en post-it qué falta", status: "todo" },
-      { id: 2, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir UNA subtarea y escribirla como 'terminado cuando...'", status: "todo" },
-      { id: 3, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Ejecutar esa subtarea", status: "todo" },
-      { id: 4, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Documentar avance en tracker visible", status: "todo" },
-      { id: 5, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Releer subtarea + abrir archivo exacto", status: "todo" },
-      { id: 6, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Ejecutar siguiente subtarea", status: "todo" },
-      { id: 7, pendingNum: "1", project: "Proyecto Jocelyn", days: [1, 2], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar y ajustar tracker", status: "todo" },
-      
-      { id: 8, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir Upwork + ver checklist de perfil", status: "todo" },
-      { id: 9, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar título + bio corta", status: "todo" },
-      { id: 10, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Definir tarifa y servicios", status: "todo" },
-      { id: 11, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir perfil + revisar qué falta", status: "todo" },
-      { id: 12, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Subir 3 portafolios", status: "todo" },
-      { id: 13, pendingNum: "2", project: "Upwork / Perfil freelance", days: [3, 5], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Enviar 1 propuesta de prueba", status: "todo" },
+      // PROYECTO 1: JOCELYN (Días 1 y 2)
+      { id: 'joc-1', cycle: 1, day: 1, project: 'Jocelyn (#1)', title: 'Abrir proyecto y listar en post-it qué falta', duration: 10, type: 'start', status: 'todo' },
+      { id: 'joc-2', cycle: 1, day: 1, project: 'Jocelyn (#1)', title: 'Elegir UNA subtarea y escribirla como "terminado cuando..."', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'joc-3', cycle: 1, day: 1, project: 'Jocelyn (#1)', title: 'Ejecutar subtarea seleccionada', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'joc-4', cycle: 1, day: 1, project: 'Jocelyn (#1)', title: 'Documentar avance en tracker visible', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'joc-5', cycle: 1, day: 2, project: 'Jocelyn (#1)', title: 'Releer subtarea + abrir archivo exacto', duration: 5, type: 'start', status: 'todo' },
+      { id: 'joc-6', cycle: 1, day: 2, project: 'Jocelyn (#1)', title: 'Ejecutar siguiente subtarea de continuidad', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'joc-7', cycle: 1, day: 2, project: 'Jocelyn (#1)', title: 'Revisar y ajustar tracker', duration: 25, type: 'medium', status: 'todo' },
 
-      { id: 14, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Listar proyectos pendientes y su estado", status: "todo" },
-      { id: 15, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir el más pequeño + definir 'done' + sesión de código", status: "todo" },
-      { id: 16, pendingNum: "3", project: "Proyectos TDD-SDD", days: [6], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Cerrar y documentar avance", status: "todo" },
+      // PROYECTO 2: UPWORK (Días 3 y 5)
+      { id: 'upw-1', cycle: 1, day: 3, project: 'Upwork (#2)', title: 'Abrir Upwork + ver checklist de perfil', duration: 10, type: 'start', status: 'todo' },
+      { id: 'upw-2', cycle: 1, day: 3, project: 'Upwork (#2)', title: 'Rellenar título + bio corta', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'upw-3', cycle: 1, day: 3, project: 'Upwork (#2)', title: 'Definir tarifa y servicios', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'upw-4', cycle: 1, day: 5, project: 'Upwork (#2)', title: 'Abrir perfil + revisar qué falta', duration: 5, type: 'start', status: 'todo' },
+      { id: 'upw-5', cycle: 1, day: 5, project: 'Upwork (#2)', title: 'Subir 3 portafolios terminados', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'upw-6', cycle: 1, day: 5, project: 'Upwork (#2)', title: 'Enviar 1 propuesta de prueba', duration: 25, type: 'medium', status: 'todo' },
 
-      { id: 17, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Crear plantilla de Spec", status: "todo" },
-      { id: 18, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar 1 Spec del proyecto más reciente", status: "todo" },
-      { id: 19, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Crear plantilla de Postmortem", status: "todo" },
-      { id: 20, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir plantilla de Postmortem", status: "todo" },
-      { id: 21, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Rellenar 1 Postmortem", status: "todo" },
-      { id: 22, pendingNum: "4", project: "Documentación: Specs y Postmortems", days: [7, 9], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar que Specs y Postmortems estén enlazados", status: "todo" },
+      // DÍA 4: BUFFER 1 (Mantenimiento)
+      { id: 'buf-d4', cycle: 1, day: 4, project: 'Buffer Día 4', title: '⚪ Opción A: Actualizar tracker visible + revisar parking lot', duration: 15, type: 'light', status: 'buffer' },
 
-      { id: 23, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir IWM + listar secciones que faltan", status: "todo" },
-      { id: 24, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Elegir 1 sección + contenido mínimo viable + maquetar", status: "todo" },
-      { id: 25, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar y publicar borrador", status: "todo" },
-      { id: 26, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir sección siguiente", status: "todo" },
-      { id: 27, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Maquetar siguiente sección", status: "todo" },
-      { id: 28, pendingNum: "5", project: "Página IWM", days: [10, 11], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Verificar enlaces y responsive", status: "todo" },
+      // PROYECTO 3: TDD-SDD (Día 6)
+      { id: 'tdd-1', cycle: 1, day: 6, project: 'TDD-SDD (#3)', title: 'Listar proyectos pendientes y su estado actual', duration: 10, type: 'start', status: 'todo' },
+      { id: 'tdd-2', cycle: 1, day: 6, project: 'TDD-SDD (#3)', title: 'Elegir el más pequeño + definir "done" + sesión código', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'tdd-3', cycle: 1, day: 6, project: 'TDD-SDD (#3)', title: 'Cerrar y documentar avance en repositorio', duration: 25, type: 'medium', status: 'todo' },
 
-      { id: 29, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Decidir estructura del blog: 3 categorías máximo", status: "todo" },
-      { id: 30, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Escribir título + 3 bullets del primer post", status: "todo" },
-      { id: 31, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Redactar post 1 en borrador", status: "todo" },
-      { id: 32, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Arranque", color: "emerald", icon: "fa-play", duration: "5 min", task: "Abrir borrador del post", status: "todo" },
-      { id: 33, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Conectar blog al portafolio", status: "todo" },
-      { id: 34, pendingNum: "6", project: "Portafolio + Blog", days: [13, 14], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Revisar navegación y publicar", status: "todo" },
+      // PROYECTO 4: DOCUMENTACIÓN (Días 7 y 9)
+      { id: 'doc-1', cycle: 1, day: 7, project: 'Documentación (#4)', title: 'Crear plantilla básica de Spec', duration: 10, type: 'start', status: 'todo' },
+      { id: 'doc-2', cycle: 1, day: 7, project: 'Documentación (#4)', title: 'Rellenar 1 Spec del proyecto más reciente', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'doc-3', cycle: 1, day: 7, project: 'Documentación (#4)', title: 'Crear plantilla de Postmortem', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'doc-4', cycle: 1, day: 9, project: 'Documentación (#4)', title: 'Abrir plantilla de Postmortem', duration: 5, type: 'start', status: 'todo' },
+      { id: 'doc-5', cycle: 1, day: 9, project: 'Documentación (#4)', title: 'Rellenar 1 Postmortem con aprendizajes', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'doc-6', cycle: 1, day: 9, project: 'Documentación (#4)', title: 'Revisar que Specs y Postmortems estén enlazados', duration: 25, type: 'medium', status: 'todo' },
 
-      { id: 35, pendingNum: "7", project: "Instagram", days: [15], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Abrir FB + capturar configuración usada", status: "todo" },
-      { id: 36, pendingNum: "7", project: "Instagram", days: [15], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Replicar pasos 1 y 2 en IG", status: "todo" },
-      { id: 37, pendingNum: "7", project: "Instagram", days: [15], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Replicar paso 3 + verificar perfil con checklist", status: "todo" },
+      // DÍA 8: BUFFER 2
+      { id: 'buf-d8', cycle: 1, day: 8, project: 'Buffer Día 8', title: '⚪ Opción A: Actualizar tracker + verificar plantilla de Spec', duration: 15, type: 'light', status: 'buffer' },
 
-      { id: 38, pendingNum: "8", project: "Página FB personal", days: [17], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Decidir nombre y bio de la página", status: "todo" },
-      { id: 39, pendingNum: "8", project: "Página FB personal", days: [17], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Configurar categoría + foto + publicar primer post", status: "todo" },
-      { id: 40, pendingNum: "8", project: "Página FB personal", days: [17], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Verificar enlaces al blog/portafolio", status: "todo" },
+      // PROYECTO 5: IWM (Días 10 y 11)
+      { id: 'iwm-1', cycle: 1, day: 10, project: 'Página IWM (#5)', title: 'Abrir IWM + listar secciones faltantes', duration: 10, type: 'start', status: 'todo' },
+      { id: 'iwm-2', cycle: 1, day: 10, project: 'Página IWM (#5)', title: 'Elegir 1 sección + contenido mínimo viable + maquetar', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'iwm-3', cycle: 1, day: 10, project: 'Página IWM (#5)', title: 'Revisar y publicar borrador', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'iwm-4', cycle: 1, day: 11, project: 'Página IWM (#5)', title: 'Abrir sección siguiente de IWM', duration: 5, type: 'start', status: 'todo' },
+      { id: 'iwm-5', cycle: 1, day: 11, project: 'Página IWM (#5)', title: 'Maquetar siguiente sección de IWM', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'iwm-6', cycle: 1, day: 11, project: 'Página IWM (#5)', title: 'Verificar enlaces y comportamiento responsive', duration: 25, type: 'medium', status: 'todo' },
 
-      { id: 41, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Arranque", color: "emerald", icon: "fa-play", duration: "10 min", task: "Revisar tablero: qué quedó hecho", status: "todo" },
-      { id: 42, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Profundo", color: "blue", icon: "fa-filter", duration: "50 min", task: "Repasar pendientes abiertos de los 8 items", status: "todo" },
-      { id: 43, pendingNum: "Cierre", project: "Cierre de ciclo", days: [18], block: "Medio", color: "amber", icon: "fa-scale-balanced", duration: "25 min", task: "Actualizar tracker + definir próxima tanda", status: "todo" }
+      // DÍA 12: BUFFER 3
+      { id: 'buf-d12', cycle: 1, day: 12, project: 'Buffer Día 12', title: '⚪ Opción A: Enlaces Specs/Postmortems + tracker IWM', duration: 15, type: 'light', status: 'buffer' },
+
+      // PROYECTO 6 & 9: PORTAFOLIO + BLOG + ARRANQUE MIRADA SIN FILTROS (Días 13 y 14)
+      { id: 'pnb-1', cycle: 1, day: 13, project: 'Portafolio + Blog (#6)', title: 'Decidir estructura del blog: 3 categorías máximo', duration: 10, type: 'start', status: 'todo' },
+      { id: 'pnb-2', cycle: 1, day: 13, project: 'Portafolio + Blog (#6)', title: 'Título + 3 bullets del primer post del portafolio', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'msf-1', cycle: 1, day: 13, project: 'Mirada sin Filtros (#9)', title: 'Crear página FB "Mirada sin Filtros": nombre, bio, foto', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'pnb-3', cycle: 1, day: 14, project: 'Portafolio + Blog (#6)', title: 'Abrir borrador del post', duration: 5, type: 'start', status: 'todo' },
+      { id: 'pnb-4', cycle: 1, day: 14, project: 'Portafolio + Blog (#6)', title: 'Conectar blog al portafolio', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'msf-2', cycle: 1, day: 14, project: 'Mirada sin Filtros (#9)', title: 'Publicar primer post de presentación en "Mirada sin Filtros"', duration: 25, type: 'medium', status: 'todo' },
+
+      // DÍA 15: CIERRE DE CICLO
+      { id: 'cls-1', cycle: 1, day: 15, project: 'Cierre Ciclo 1', title: 'Revisar tablero: qué quedó hecho y celebrar avance', duration: 10, type: 'start', status: 'todo' },
+      { id: 'cls-2', cycle: 1, day: 15, project: 'Cierre Ciclo 1', title: 'Actualizar tracker + repasar pendientes abiertos', duration: 25, type: 'medium', status: 'todo' },
+      { id: 'cls-3', cycle: 1, day: 15, project: 'Cierre Ciclo 1', title: 'Planificar Ciclo 2 + anotar 1ra tarea de arranque', duration: 25, type: 'medium', status: 'todo' },
+
+      // TAREAS CICLO 2 (Reubicadas según documento)
+      { id: 'c2-1', cycle: 2, day: 1, project: 'Instagram (#7)', title: 'Configurar Instagram igual que FB', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'c2-2', cycle: 2, day: 3, project: 'FB Personal (#8)', title: 'Definir página personal de FB (blog personal)', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'c2-3', cycle: 2, day: 5, project: 'Mirada sin Filtros (#10)', title: 'Elaborar blog de "Mirada sin Filtros" (fase 2)', duration: 50, type: 'deep', status: 'todo' },
+      { id: 'c2-4', cycle: 2, day: 7, project: 'Orden de Chats (#12)', title: 'Ordenar chats de IAs en todos los dispositivos (fase 1)', duration: 25, type: 'medium', status: 'todo' },
+
+      // TAREAS CICLO 3 (Fase de consolidación y libro)
+      { id: 'c3-1', cycle: 3, day: 1, project: 'Mirada sin Filtros (#11)', title: 'Estructurar libro de "Mirada sin Filtros": índice y capítulos', duration: 50, type: 'deep', status: 'todo' }
     ];
 
-    const BUFFER_DAYS = [4, 8, 12, 16];
-    
-    // Mapeo canónico de bloques a colores e íconos
-    const BLOCK_CONFIG = {
-      'Arranque': { color: 'emerald', icon: 'fa-play', defaultDuration: '10 min' },
-      'Profundo': { color: 'blue', icon: 'fa-filter', defaultDuration: '50 min' },
-      'Medio':    { color: 'amber', icon: 'fa-scale-balanced', defaultDuration: '25 min' },
-      'Ligero':   { color: 'slate', icon: 'fa-feather', defaultDuration: '15 min' },
-      'Buffer':   { color: 'sky', icon: 'fa-arrows-rotate', defaultDuration: '50 min' },
-      'Cierre':   { color: 'purple', icon: 'fa-spa', defaultDuration: '5 min' }
-    };
-
-    // Configuración de Prioridades
-    const PRIORITY_CONFIG = {
-      low: {
-        label: 'Baja',
-        icon: 'fa-arrow-down',
-        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        dotColor: 'text-emerald-500'
-      },
-      medium: {
-        label: 'Media',
-        icon: 'fa-minus',
-        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-        dotColor: 'text-blue-500'
-      },
-      high: {
-        label: 'Alta',
-        icon: 'fa-arrow-up',
-        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
-        dotColor: 'text-amber-500'
-      },
-      urgent: {
-        label: 'Urgente',
-        icon: 'fa-triangle-exclamation',
-        badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
-        dotColor: 'text-rose-500'
-      }
-    };
-
-    let tasks = JSON.parse(localStorage.getItem('kanban_18d_tasks')) || INITIAL_TASKS;
-
-    // Asegurar que las tareas existentes tengan una prioridad por defecto
-    tasks = tasks.map(t => ({
-      ...t,
-      priority: t.priority || 'medium'
-    }));
-
-    let currentFilterDay = 'all';
-    let activeMobileCol = 'todo';
-    let taskPendingDeleteId = null;
-
-    // Tabs de Vistas principales
-    const btnTabKanban = document.getElementById('viewTabKanban');
-    const btnTabChecklist = document.getElementById('viewTabChecklist');
-    const kanbanSection = document.getElementById('kanbanSection');
-    const checklistSection = document.getElementById('checklistSection');
-    const mobileColumnSelector = document.getElementById('mobileColumnSelector');
-
-    btnTabKanban.addEventListener('click', () => switchView('kanban'));
-    btnTabChecklist.addEventListener('click', () => switchView('checklist'));
-
-    function switchView(view) {
-      if (view === 'kanban') {
-        kanbanSection.classList.remove('hidden');
-        checklistSection.classList.add('hidden');
-        mobileColumnSelector.classList.remove('hidden');
-        mobileColumnSelector.classList.add('flex');
-        btnTabKanban.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm';
-        btnTabChecklist.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
-      } else {
-        kanbanSection.classList.add('hidden');
-        checklistSection.classList.remove('hidden');
-        mobileColumnSelector.classList.add('hidden');
-        mobileColumnSelector.classList.remove('flex');
-        btnTabChecklist.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-slate-900 shadow-sm';
-        btnTabKanban.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
-      }
-      renderAll();
-    }
-
-    // Inicializar selector de días
-    function populateDayFilter() {
-      const dayFilterEl = document.getElementById('dayFilter');
-      const selectedVal = dayFilterEl.value || 'all';
-      dayFilterEl.innerHTML = '<option value="all">Todos los Días (Ciclo completo de 18 días)</option>';
-
-      for (let d = 1; d <= 18; d++) {
-        const opt = document.createElement('option');
-        opt.value = d;
-        const isBuffer = BUFFER_DAYS.includes(d);
-
-        if (isBuffer) {
-          opt.textContent = `Día ${d}: 🔄 Buffer de Recuperación (Descanso/Atrasos)`;
-        } else {
-          const dayProjects = Array.from(new Set(
-            tasks.filter(t => t.days.includes(d)).map(t => `${t.pendingNum && t.pendingNum !== 'Cierre' ? 'Pendiente ' + t.pendingNum + ' · ' : ''}${t.project}`)
-          ));
-          const projectLabel = dayProjects.length > 0 ? dayProjects.join(' | ') : 'Sin tareas asignadas';
-          opt.textContent = `Día ${d}: ${projectLabel}`;
-        }
-        dayFilterEl.appendChild(opt);
-      }
-      dayFilterEl.value = selectedVal;
-    }
-
-    document.getElementById('dayFilter').addEventListener('change', (e) => {
-      currentFilterDay = e.target.value;
-      renderAll();
-    });
-
-    // Resetear al estado inicial
-    document.getElementById('btnReset').addEventListener('click', () => {
-      openDeleteConfirmModal('¿Deseas reiniciar todas las tareas al estado original de fábrica?', () => {
-        tasks = JSON.parse(JSON.stringify(INITIAL_TASKS));
-        saveTasks();
-        populateDayFilter();
-        renderAll();
-      });
-    });
-
-    function saveTasks() {
-      localStorage.setItem('kanban_18d_tasks', JSON.stringify(tasks));
-    }
-
-    // Columnas móviles
-    document.querySelectorAll('.mobile-col-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeMobileCol = btn.dataset.colTarget;
-        updateMobileColumnVisibility();
-      });
-    });
-
-    function updateMobileColumnVisibility() {
-      if (window.innerWidth >= 768) {
-        document.querySelectorAll('.kanban-wrapper').forEach(w => w.classList.remove('hidden'));
-        return;
-      }
-      document.querySelectorAll('.kanban-wrapper').forEach(wrapper => {
-        if (wrapper.id === `wrapper-${activeMobileCol}`) {
-          wrapper.classList.remove('hidden');
-        } else {
-          wrapper.classList.add('hidden');
-        }
-      });
-
-      document.querySelectorAll('.mobile-col-btn').forEach(btn => {
-        if (btn.dataset.colTarget === activeMobileCol) {
-          btn.className = 'mobile-col-btn flex-1 py-1.5 px-2 rounded-lg bg-white text-slate-900 font-bold shadow-xs whitespace-nowrap text-center';
-        } else {
-          btn.className = 'mobile-col-btn flex-1 py-1.5 px-2 rounded-lg text-slate-600 font-medium whitespace-nowrap text-center';
-        }
-      });
-    }
-
-    window.addEventListener('resize', updateMobileColumnVisibility);
-
-    function renderAll() {
-      renderBoard();
-      renderChecklist();
-      updateMobileColumnVisibility();
-    }
-
-    // --- RENDER KANBAN ---
-    function renderBoard() {
-      const columns = {
-        todo: document.getElementById('col-todo'),
-        inprogress: document.getElementById('col-inprogress'),
-        buffer: document.getElementById('col-buffer'),
-        done: document.getElementById('col-done')
-      };
-
-      Object.values(columns).forEach(col => col.innerHTML = '');
-      const counts = { todo: 0, inprogress: 0, buffer: 0, done: 0 };
-
-      const filteredTasks = tasks.filter(t => {
-        if (currentFilterDay === 'all') return true;
-        return t.days.includes(Number(currentFilterDay));
-      });
-
-      filteredTasks.forEach(task => {
-        if (counts[task.status] !== undefined) counts[task.status]++;
-        const card = createCardElement(task);
-        if (columns[task.status]) columns[task.status].appendChild(card);
-      });
-
-      ['todo', 'inprogress', 'buffer', 'done'].forEach(st => {
-        document.getElementById(`badge-${st}`).innerText = counts[st];
-        document.getElementById(`m-badge-${st}`).innerText = counts[st];
-      });
-    }
-
-    function createCardElement(task) {
-      const card = document.createElement('div');
-      card.className = `task-card bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs hover:shadow-md transition-all ${task.status === 'done' ? 'border-emerald-200 bg-emerald-50/25' : ''}`;
-      card.draggable = true;
-      card.dataset.id = task.id;
-
-      const colorMap = {
-        emerald: { bg: 'bg-emerald-500', text: 'text-emerald-700', badge: 'bg-emerald-50 border-emerald-100' },
-        blue: { bg: 'bg-blue-600', text: 'text-blue-700', badge: 'bg-blue-50 border-blue-100' },
-        amber: { bg: 'bg-amber-500', text: 'text-amber-700', badge: 'bg-amber-50 border-amber-100' },
-        sky: { bg: 'bg-sky-500', text: 'text-sky-700', badge: 'bg-sky-50 border-sky-100' },
-        purple: { bg: 'bg-purple-600', text: 'text-purple-700', badge: 'bg-purple-50 border-purple-100' },
-        slate: { bg: 'bg-slate-500', text: 'text-slate-700', badge: 'bg-slate-50 border-slate-200' }
-      };
-      const c = colorMap[task.color] || colorMap.blue;
-      const prio = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['medium'];
-
-      card.innerHTML = `
-        <div class="flex items-start justify-between gap-1.5 mb-1.5">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full ${c.bg} text-white flex items-center justify-center text-[9px] sm:text-[10px] shrink-0 shadow-xs">
-              <i class="fa-solid ${task.icon || 'fa-bolt'}"></i>
-            </span>
-            <span class="text-[11px] sm:text-xs font-bold text-slate-800 tracking-tight truncate">
-              ${task.pendingNum ? '#' + task.pendingNum : 'Tarea'}
-            </span>
-            <!-- Badge de Prioridad -->
-            <span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${prio.badgeClass}" title="Prioridad: ${prio.label}">
-              <i class="fa-solid ${prio.icon} text-[8px]"></i>
-              <span class="hidden sm:inline">${prio.label}</span>
-            </span>
-          </div>
-
-          <div class="flex items-center gap-1">
-            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${c.badge} ${c.text} shrink-0">
-              ${task.block}
-            </span>
-            <!-- Botón Editar -->
-            <button onclick="editTask(${task.id})" title="Editar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
-              <i class="fa-solid fa-pen text-[10px]"></i>
-            </button>
-            <!-- Botón Eliminar -->
-            <button onclick="deleteTask(${task.id})" title="Eliminar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
-              <i class="fa-solid fa-trash-can text-[10px]"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="text-xs font-semibold ${task.status === 'done' ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} mb-1 leading-snug">
-          ${task.task}
-        </div>
-
-        <div class="text-[10px] sm:text-[11px] text-slate-500 mb-2 flex items-center gap-1 truncate">
-          <i class="fa-regular fa-folder text-slate-400 text-[10px]"></i> <span class="truncate">${task.project}</span>
-        </div>
-
-        <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-medium">
-          <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i>D: ${task.days.join(',')}</span>
-          <span class="text-slate-700 font-bold"><i class="fa-regular fa-clock text-slate-400 mr-1"></i>${task.duration || '25 min'}</span>
-        </div>
-
-        <div class="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-slate-50 bg-slate-50/50 -mx-3 -mb-3 sm:-mx-3.5 sm:-mb-3.5 p-1.5 rounded-b-xl">
-          <span class="text-[9px] text-slate-400 font-medium pl-1">Mover:</span>
-          <div class="flex items-center gap-1">
-            <button onclick="moveTask(${task.id}, 'todo')" class="px-2 py-1 text-[10px] rounded hover:bg-slate-200 text-slate-600 ${task.status === 'todo' ? 'font-bold bg-slate-200' : ''}" title="Por Hacer">Hacer</button>
-            <button onclick="moveTask(${task.id}, 'inprogress')" class="px-2 py-1 text-[10px] rounded hover:bg-blue-100 text-blue-700 ${task.status === 'inprogress' ? 'font-bold bg-blue-100' : ''}" title="En Curso">Curso</button>
-            <button onclick="moveTask(${task.id}, 'buffer')" class="px-2 py-1 text-[10px] rounded hover:bg-sky-100 text-sky-700 ${task.status === 'buffer' ? 'font-bold bg-sky-100' : ''}" title="Buffer">Buffer</button>
-            <button onclick="moveTask(${task.id}, 'done')" class="px-2 py-1 text-[10px] rounded hover:bg-emerald-100 text-emerald-700 ${task.status === 'done' ? 'font-bold bg-emerald-100' : ''}" title="Hecho"><i class="fa-solid fa-check"></i></button>
-          </div>
-        </div>
-      `;
-
-      card.addEventListener('dragstart', (e) => {
-        card.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', task.id);
-      });
-      card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
-      return card;
-    }
-
-    // Drag & Drop
-    document.querySelectorAll('.kanban-col').forEach(col => {
-      col.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        col.classList.add('drag-over');
-      });
-      col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
-      col.addEventListener('drop', (e) => {
-        e.preventDefault();
-        col.classList.remove('drag-over');
-        const taskId = e.dataTransfer.getData('text/plain');
-        moveTask(Number(taskId), col.dataset.status);
-      });
-    });
-
-    window.moveTask = function(taskId, newStatus) {
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        task.status = newStatus;
-        saveTasks();
-        renderAll();
-      }
-    };
-
-    // --- RENDER CHECKLIST ---
-    function renderChecklist() {
-      const container = document.getElementById('checklistContainer');
-      container.innerHTML = '';
-
-      const filteredTasks = tasks.filter(t => {
-        if (currentFilterDay === 'all') return true;
-        return t.days.includes(Number(currentFilterDay));
-      });
-
-      const totalFiltered = filteredTasks.length;
-      const doneFiltered = filteredTasks.filter(t => t.status === 'done').length;
-      const percentage = totalFiltered > 0 ? Math.round((doneFiltered / totalFiltered) * 100) : 0;
-      
-      document.getElementById('checklist-progress-text').innerText = `${percentage}% (${doneFiltered}/${totalFiltered})`;
-      document.getElementById('checklist-progress-bar').style.width = `${percentage}%`;
-
-      const grouped = {};
-      filteredTasks.forEach(t => {
-        const prefix = (t.pendingNum && t.pendingNum !== 'Cierre') ? `Pendiente ${t.pendingNum} · ` : '';
-        const key = `${prefix}${t.project}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(t);
-      });
-
-      if (Object.keys(grouped).length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 text-center text-slate-500">
-            <i class="fa-solid fa-mug-hot text-2xl sm:text-3xl text-sky-500 mb-2"></i>
-            <p class="font-bold text-slate-700 text-sm sm:text-base">Sin tareas en este filtro</p>
-            <p class="text-xs">No hay pendientes asignados para este día o estado.</p>
-          </div>
-        `;
-        return;
-      }
-
-      for (const [groupName, groupTasks] of Object.entries(grouped)) {
-        const groupEl = document.createElement('div');
-        groupEl.className = 'bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs';
-
-        const groupDone = groupTasks.filter(t => t.status === 'done').length;
-        const groupTotal = groupTasks.length;
-
-        groupEl.innerHTML = `
-          <div class="bg-slate-50/80 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="w-2.5 h-2.5 rounded-full shrink-0 ${groupDone === groupTotal ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
-              <h4 class="font-bold text-slate-900 text-xs sm:text-sm tracking-tight truncate">${groupName}</h4>
-            </div>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${groupDone === groupTotal ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}">
-              ${groupDone}/${groupTotal}
-            </span>
-          </div>
-          <div class="divide-y divide-slate-100 p-1 sm:p-2">
-            ${groupTasks.map(t => {
-              const isDone = t.status === 'done';
-              const prio = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG['medium'];
-              return `
-                <div class="flex items-start justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl transition hover:bg-slate-50 ${isDone ? 'bg-emerald-50/25' : ''}">
-                  <div class="flex items-start gap-2.5 flex-1 min-w-0">
-                    <input 
-                      type="checkbox" 
-                      id="chk-task-${t.id}" 
-                      ${isDone ? 'checked' : ''} 
-                      onchange="toggleTaskDone(${t.id}, this.checked)"
-                      class="mt-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-                    >
-                    <label for="chk-task-${t.id}" class="flex-1 cursor-pointer select-none min-w-0">
-                      <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                        <span class="text-xs font-semibold ${isDone ? 'line-through text-slate-400 font-normal' : 'text-slate-900'} leading-tight">
-                          ${t.task}
-                        </span>
-                        <!-- Badge Prioridad -->
-                        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full border inline-flex items-center gap-0.5 ${prio.badgeClass}">
-                          <i class="fa-solid ${prio.icon} text-[8px]"></i> ${prio.label}
-                        </span>
-                        ${isDone ? '<span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5"><i class="fa-solid fa-check text-[8px]"></i> HECHO</span>' : ''}
-                      </div>
-                      <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] sm:text-[11px] text-slate-400">
-                        <span><i class="fa-regular fa-clock mr-1"></i>${t.duration || '25 min'} (${t.block})</span>
-                        <span><i class="fa-regular fa-calendar mr-1"></i>D: ${t.days.join(',')}</span>
-                        <span class="text-slate-500 capitalize">Estado: <strong>${t.status}</strong></span>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  <!-- Acciones CRUD en Checklist -->
-                  <div class="flex items-center gap-1 shrink-0 ml-1">
-                    <button onclick="editTask(${t.id})" title="Editar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition">
-                      <i class="fa-solid fa-pen text-[10px]"></i>
-                    </button>
-                    <button onclick="deleteTask(${t.id})" title="Eliminar tarea" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
-                      <i class="fa-solid fa-trash-can text-[10px]"></i>
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        `;
-        container.appendChild(groupEl);
-      }
-    }
-
-    window.toggleTaskDone = function(taskId, isChecked) {
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        task.status = isChecked ? 'done' : 'todo';
-        saveTasks();
-        renderAll();
-      }
-    };
-
-    // ==================== FUNCIONALIDAD CRUD Y MODAL ====================
-
-    // Inicializar los checkboxes del selector de días en el modal
-    const daysContainer = document.getElementById('daysCheckboxContainer');
-    for (let day = 1; day <= 18; day++) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'relative text-center';
-      wrapper.innerHTML = `
-        <input type="checkbox" id="modalDay${day}" value="${day}" class="day-pill-checkbox sr-only">
-        <label for="modalDay${day}" class="block py-1 text-center font-bold text-[11px] text-slate-600 border border-slate-200 bg-white rounded-lg cursor-pointer hover:bg-slate-100 transition select-none">
-          D${day}
-        </label>
-      `;
-      daysContainer.appendChild(wrapper);
-    }
-
-    // Botones de selección rápida de días
-    document.getElementById('btnSelectAllDays').addEventListener('click', () => {
-      document.querySelectorAll('.day-pill-checkbox').forEach(cb => cb.checked = true);
-      document.getElementById('daysValidationMsg').classList.add('hidden');
-    });
-
-    document.getElementById('btnClearDays').addEventListener('click', () => {
-      document.querySelectorAll('.day-pill-checkbox').forEach(cb => cb.checked = false);
-    });
-
-    // Abrir Modal para Crear
-    const taskModal = document.getElementById('taskModal');
-    const taskForm = document.getElementById('taskForm');
-    const modalTitle = document.getElementById('modalTitle');
-    const taskEditId = document.getElementById('taskEditId');
-    const taskBlockSelect = document.getElementById('taskBlock');
-    const taskDurationInput = document.getElementById('taskDuration');
-
-    document.getElementById('btnNewTask').addEventListener('click', () => {
-      openTaskModal();
-    });
-
-    // Actualizar duración por defecto según bloque seleccionado
-    taskBlockSelect.addEventListener('change', (e) => {
-      const block = BLOCK_CONFIG[e.target.value];
-      if (block && (!taskDurationInput.value || taskDurationInput.dataset.autoFilled === "true")) {
-        taskDurationInput.value = block.defaultDuration;
-        taskDurationInput.dataset.autoFilled = "true";
-      }
-    });
-
-    taskDurationInput.addEventListener('input', () => {
-      taskDurationInput.dataset.autoFilled = "false";
-    });
-
-    function openTaskModal(task = null) {
-      taskForm.reset();
-      document.getElementById('daysValidationMsg').classList.add('hidden');
-
-      if (task) {
-        // Modo Edición
-        modalTitle.innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-600"></i> Editar Tarea';
-        taskEditId.value = task.id;
-        document.getElementById('taskTitle').value = task.task;
-        document.getElementById('taskProject').value = task.project;
-        document.getElementById('taskPendingNum').value = task.pendingNum || '';
-        document.getElementById('taskBlock').value = task.block || 'Profundo';
-        document.getElementById('taskDuration').value = task.duration || '50 min';
-        document.getElementById('taskDuration').dataset.autoFilled = "false";
-        document.getElementById('taskStatus').value = task.status || 'todo';
-
-        // Prioridad seleccionada
-        const targetPrio = task.priority || 'medium';
-        const prioRadio = document.querySelector(`input[name="taskPriority"][value="${targetPrio}"]`);
-        if (prioRadio) prioRadio.checked = true;
-
-        // Marcar días
-        document.querySelectorAll('.day-pill-checkbox').forEach(cb => {
-          cb.checked = task.days.includes(Number(cb.value));
-        });
-      } else {
-        // Modo Nueva Tarea
-        modalTitle.innerHTML = '<i class="fa-solid fa-plus-circle text-blue-600"></i> Crear Nueva Tarea';
-        taskEditId.value = '';
-        taskDurationInput.dataset.autoFilled = "true";
-        document.getElementById('taskBlock').value = 'Profundo';
-        document.getElementById('taskDuration').value = '50 min';
-        document.getElementById('taskStatus').value = 'todo';
-
-        // Por defecto: Prioridad Media
-        const defaultPrio = document.querySelector('input[name="taskPriority"][value="medium"]');
-        if (defaultPrio) defaultPrio.checked = true;
-
-        // Si hay un día seleccionado en el filtro (distinto de 'all'), seleccionarlo automáticamente
-        const filterDayNum = Number(currentFilterDay);
-        document.querySelectorAll('.day-pill-checkbox').forEach(cb => {
-          cb.checked = (!isNaN(filterDayNum) && filterDayNum >= 1 && filterDayNum <= 18) ? (Number(cb.value) === filterDayNum) : false;
-        });
-      }
-
-      taskModal.classList.remove('hidden');
-      document.getElementById('taskTitle').focus();
-    }
-
-    function closeTaskModal() {
-      taskModal.classList.add('hidden');
-    }
-
-    document.getElementById('btnCancelModal').addEventListener('click', closeTaskModal);
-    document.getElementById('btnCancelModalBottom').addEventListener('click', closeTaskModal);
-    taskModal.addEventListener('click', (e) => {
-      if (e.target === taskModal) closeTaskModal();
-    });
-
-    // Guardar (Crear o Actualizar)
-    taskForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const selectedDays = Array.from(document.querySelectorAll('.day-pill-checkbox:checked'))
-        .map(cb => Number(cb.value))
-        .sort((a, b) => a - b);
-
-      if (selectedDays.length === 0) {
-        document.getElementById('daysValidationMsg').classList.remove('hidden');
-        return;
-      }
-
-      const id = taskEditId.value ? Number(taskEditId.value) : null;
-      const title = document.getElementById('taskTitle').value.trim();
-      const project = document.getElementById('taskProject').value.trim();
-      const pendingNum = document.getElementById('taskPendingNum').value.trim();
-      const block = document.getElementById('taskBlock').value;
-      const duration = document.getElementById('taskDuration').value.trim() || '25 min';
-      const status = document.getElementById('taskStatus').value;
-      
-      const priorityRadio = document.querySelector('input[name="taskPriority"]:checked');
-      const priority = priorityRadio ? priorityRadio.value : 'medium';
-
-      const blockInfo = BLOCK_CONFIG[block] || BLOCK_CONFIG['Profundo'];
-
-      if (id) {
-        // Editar existente
-        const taskIndex = tasks.findIndex(t => t.id === id);
-        if (taskIndex !== -1) {
-          tasks[taskIndex] = {
-            ...tasks[taskIndex],
-            task: title,
-            project: project,
-            pendingNum: pendingNum,
-            days: selectedDays,
-            block: block,
-            color: blockInfo.color,
-            icon: blockInfo.icon,
-            duration: duration,
-            status: status,
-            priority: priority
-          };
-        }
-      } else {
-        // Crear nueva tarea
-        const newId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
-        const newTask = {
-          id: newId,
-          pendingNum: pendingNum || `${newId}`,
-          project: project,
-          days: selectedDays,
-          block: block,
-          color: blockInfo.color,
-          icon: blockInfo.icon,
-          duration: duration,
-          task: title,
-          status: status,
-          priority: priority
+    // PLAN MAESTRO DEL CALENDARIO DE 15 DÍAS
+    const CALENDAR_PLAN = [
+      { day: 1, focus: 'Jocelyn (#1)', isBuffer: false, blocks: ['🟢 Abrir + post-it (10m)', '🔵 Subtarea 1 (50m)', '🟡 Tracker (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 2, focus: 'Jocelyn (#1) — Continuidad', isBuffer: false, blocks: ['🟢 Releer + abrir (5m)', '🔵 Subtarea 2 (50m)', '🟡 Ajustar tracker (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 3, focus: 'Upwork (#2)', isBuffer: false, blocks: ['🟢 Abrir checklist (10m)', '🔵 Título + Bio (50m)', '🟡 Tarifa y servicios (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 4, focus: 'BUFFER 1 🔄', isBuffer: true, blocks: ['🔄 Recuperar atrasos D1-3', '⚪ Tarea ligera (Tracker / Archivar)', '🧘 Descanso real'] },
+      { day: 5, focus: 'Upwork (#2) — Continuidad', isBuffer: false, blocks: ['🟢 Revisar perfil (5m)', '🔵 Subir 3 portafolios (50m)', '🟡 Enviar propuesta (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 6, focus: 'TDD-SDD (#3)', isBuffer: false, blocks: ['🟢 Listar estado (10m)', '🔵 Proyecto chico + código (50m)', '🟡 Cerrar y documentar (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 7, focus: 'Documentación (#4)', isBuffer: false, blocks: ['🟢 Plantilla Spec (10m)', '🔵 Spec proyecto reciente (50m)', '🟡 Plantilla Postmortem (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 8, focus: 'BUFFER 2 🔄', isBuffer: true, blocks: ['🔄 Recuperar atrasos D5-7', '⚪ Tarea ligera (Plantilla D9 / Orden)', '🧘 Descanso real'] },
+      { day: 9, focus: 'Documentación (#4) — Continuidad', isBuffer: false, blocks: ['🟢 Abrir Postmortem (5m)', '🔵 Rellenar Postmortem (50m)', '🟡 Enlazar Specs/Postmortems (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 10, focus: 'Página IWM (#5)', isBuffer: false, blocks: ['🟢 Listar secciones (10m)', '🔵 Maquetar 1 sección MVP (50m)', '🟡 Publicar borrador (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 11, focus: 'Página IWM (#5) — Continuidad', isBuffer: false, blocks: ['🟢 Abrir sección (5m)', '🔵 Maquetar sección (50m)', '🟡 Verificar responsive/links (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 12, focus: 'BUFFER 3 🔄', isBuffer: true, blocks: ['🔄 Recuperar atrasos D9-11', '⚪ Tarea ligera (Categorías blog)', '🧘 Descanso real'] },
+      { day: 13, focus: 'Portafolio + Mirada sin Filtros', isBuffer: false, blocks: ['🟢 3 Categorías blog (10m)', '🔵 1er post portafolio (50m)', '🟡 Crear página FB Mirada sin Filtros (25m)', '🧘 Cierre'] },
+      { day: 14, focus: 'Portafolio + Mirada sin Filtros', isBuffer: false, blocks: ['🟢 Abrir borrador (5m)', '🔵 Conectar blog (50m)', '🟡 Publicar 1er post FB (25m)', '🧘 Cierre ritual (5m)'] },
+      { day: 15, focus: 'BUFFER 4 + CIERRE DE CICLO 🔄', isBuffer: true, isFinal: true, blocks: ['🔄 Recuperar atrasos D13-14', '🟡 Revisar tablero y tracker (25m)', '🟡 Planificar Ciclo 2 (25m)', '🧘 Descanso de ciclo'] }
+    ];
+
+    // CONTROLADOR PRINCIPAL DE LA APLICACIÓN
+    class CycleApp {
+      constructor() {
+        this.tasks = this.loadTasks();
+        this.currentCycle = 1;
+        this.activeView = 'kanban';
+        this.timer = {
+          totalSeconds: 25 * 60,
+          remainingSeconds: 25 * 60,
+          interval: null,
+          isRunning: false,
+          label: '🟡 Pomodoro (25 min)'
         };
-        tasks.push(newTask);
+        this.draggedTaskId = null;
       }
 
-      saveTasks();
-      populateDayFilter();
-      renderAll();
-      closeTaskModal();
-    });
+      init() {
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+        this.renderKanban();
+        this.renderCalendar();
+        this.renderPrintable();
+        this.loadDailyRitual();
 
-    // Manejar Edición desde tarjeta o checklist
-    window.editTask = function(taskId) {
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        openTaskModal(task);
+        // Detectar preferencia de modo oscuro del sistema
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        }
       }
-    };
 
-    // Manejar Eliminación con confirmación modal limpia (sin alert/confirm)
-    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
-    const deleteConfirmText = document.getElementById('deleteConfirmText');
-    const btnConfirmDelete = document.getElementById('btnConfirmDelete');
-    const btnCancelDelete = document.getElementById('btnCancelDelete');
-    let onConfirmDeleteCallback = null;
+      loadTasks() {
+        const stored = localStorage.getItem('cycle_tasks_v2');
+        if (stored) {
+          try {
+            return JSON.parse(stored);
+          } catch (e) {
+            console.error('Error cargando tareas:', e);
+          }
+        }
+        return JSON.parse(JSON.stringify(INITIAL_TASKS));
+      }
 
-    function openDeleteConfirmModal(message, callback) {
-      deleteConfirmText.textContent = message;
-      onConfirmDeleteCallback = callback;
-      deleteConfirmModal.classList.remove('hidden');
+      saveTasks() {
+        localStorage.setItem('cycle_tasks_v2', JSON.stringify(this.tasks));
+      }
+
+      // CAMBIO DE VISTA
+      switchView(viewName) {
+        this.activeView = viewName;
+        document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('bg-sky-50', 'dark:bg-teaDark-700/60', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+          btn.classList.add('text-slate-600', 'dark:text-slate-400');
+        });
+
+        const targetPanel = document.getElementById(`view-${viewName}`);
+        if (targetPanel) targetPanel.classList.remove('hidden');
+
+        const activeBtn = document.getElementById(`tab-${viewName}`);
+        if (activeBtn) {
+          activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+          activeBtn.classList.add('bg-sky-50', 'dark:bg-teaDark-700/60', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+        }
+
+        if (viewName === 'todo') this.renderPrintable();
+        lucide.createIcons();
+      }
+
+      switchCycle(cycleNum) {
+        this.currentCycle = parseInt(cycleNum, 10);
+        this.renderKanban();
+        this.renderPrintable();
+      }
+
+      toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+      }
+
+      // GESTIÓN KANBAN
+      renderKanban() {
+        const cols = {
+          todo: document.getElementById('col-todo'),
+          inprogress: document.getElementById('col-inprogress'),
+          buffer: document.getElementById('col-buffer'),
+          done: document.getElementById('col-done')
+        };
+
+        // Limpiar columnas
+        Object.values(cols).forEach(col => col.innerHTML = '');
+
+        const cycleTasks = this.tasks.filter(t => t.cycle === this.currentCycle);
+
+        const counts = { todo: 0, inprogress: 0, buffer: 0, done: 0 };
+
+        cycleTasks.forEach(task => {
+          counts[task.status] = (counts[task.status] || 0) + 1;
+          const card = this.createCardElement(task);
+          if (cols[task.status]) {
+            cols[task.status].appendChild(card);
+          }
+        });
+
+        // Actualizar contadores
+        document.getElementById('count-todo').textContent = counts.todo;
+        document.getElementById('count-inprogress').textContent = counts.inprogress;
+        document.getElementById('count-buffer').textContent = counts.buffer;
+        document.getElementById('count-done').textContent = counts.done;
+
+        lucide.createIcons();
+      }
+
+      getBlockMeta(type) {
+        switch (type) {
+          case 'start':
+            return { symbol: '🟢', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20', label: 'Arranque' };
+          case 'deep':
+            return { symbol: '🔵', bg: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20', label: 'Profundo' };
+          case 'medium':
+            return { symbol: '🟡', bg: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20', label: 'Medio' };
+          case 'light':
+            return { symbol: '⚪', bg: 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20', label: 'Ligero' };
+          case 'buffer':
+            return { symbol: '🔄', bg: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20', label: 'Buffer' };
+          default:
+            return { symbol: '⚪', bg: 'bg-slate-100 text-slate-600', label: 'Tarea' };
+        }
+      }
+
+      createCardElement(task) {
+        const div = document.createElement('div');
+        div.className = 'group relative bg-white dark:bg-teaDark-700/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-sky-400 dark:hover:border-sky-500 shadow-sm transition-all duration-150 cursor-grab active:cursor-grabbing';
+        div.draggable = true;
+        div.ondragstart = (e) => {
+          this.draggedTaskId = task.id;
+          div.classList.add('opacity-40');
+        };
+        div.ondragend = () => {
+          this.draggedTaskId = null;
+          div.classList.remove('opacity-40');
+        };
+
+        const meta = this.getBlockMeta(task.type);
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between gap-1 text-[11px] mb-1.5 font-medium">
+            <span class="px-2 py-0.5 rounded-full border ${meta.bg} flex items-center gap-1">
+              <span>${meta.symbol}</span> ${meta.label}
+            </span>
+            <span class="text-slate-400 dark:text-slate-400 font-mono flex items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3"></i> ${task.duration}m · D${task.day}
+            </span>
+          </div>
+
+          <div class="font-bold text-xs text-sky-600 dark:text-sky-400 mb-0.5">${task.project}</div>
+          <div class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">${task.title}</div>
+
+          <!-- Acciones de movimiento rápido de estado -->
+          <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between text-[11px]">
+            <span class="text-[10px] text-slate-400">Ciclo ${task.cycle}</span>
+            <div class="flex items-center gap-1">
+              ${task.status !== 'todo' ? `
+                <button onclick="app.moveTaskStatus('${task.id}', 'prev')" title="Retroceder" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-teaDark-600 text-slate-500">
+                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : ''}
+              
+              <button onclick="app.startTaskPomodoro(${task.duration}, '${task.title.replace(/'/g, "\\'")}')" title="Comenzar con Pomodoro" class="p-1 rounded text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-950/40">
+                <i data-lucide="play" class="w-3.5 h-3.5"></i>
+              </button>
+
+              ${task.status !== 'done' ? `
+                <button onclick="app.moveTaskStatus('${task.id}', 'next')" title="Avanzar" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-teaDark-600 text-slate-500">
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : `
+                <span class="text-emerald-500 flex items-center font-bold text-[11px] gap-0.5">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                </span>
+              `}
+            </div>
+          </div>
+        `;
+
+        return div;
+      }
+
+      handleDragOver(e) {
+        e.preventDefault();
+      }
+
+      handleDrop(e, targetStatus) {
+        e.preventDefault();
+        if (!this.draggedTaskId) return;
+
+        this.setTaskStatus(this.draggedTaskId, targetStatus);
+      }
+
+      setTaskStatus(taskId, newStatus) {
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const previousStatus = task.status;
+        task.status = newStatus;
+        this.saveTasks();
+        this.renderKanban();
+
+        // Dopamina visual al terminar una tarea
+        if (newStatus === 'done' && previousStatus !== 'done') {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#38bdf8', '#10b981', '#f59e0b']
+          });
+        }
+      }
+
+      moveTaskStatus(taskId, direction) {
+        const flow = ['todo', 'inprogress', 'buffer', 'done'];
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        let index = flow.indexOf(task.status);
+        if (direction === 'next' && index < flow.length - 1) {
+          this.setTaskStatus(taskId, flow[index + 1]);
+        } else if (direction === 'prev' && index > 0) {
+          this.setTaskStatus(taskId, flow[index - 1]);
+        }
+      }
+
+      // VISTA CALENDARIO
+      renderCalendar() {
+        const container = document.getElementById('calendarGrid');
+        container.innerHTML = '';
+
+        CALENDAR_PLAN.forEach(dayPlan => {
+          const card = document.createElement('div');
+          
+          if (dayPlan.isFinal) {
+            card.className = 'border-2 border-indigo-400 dark:border-indigo-500 bg-indigo-50/40 dark:bg-teaDark-800 rounded-xl p-4 shadow-sm';
+          } else if (dayPlan.isBuffer) {
+            card.className = 'border border-indigo-200 dark:border-indigo-900 bg-indigo-50/20 dark:bg-teaDark-800/80 rounded-xl p-4';
+          } else {
+            card.className = 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-teaDark-800 rounded-xl p-4';
+          }
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-100 dark:border-slate-700/60">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-lg ${dayPlan.isBuffer ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-teaDark-700 text-slate-700 dark:text-slate-300'}">
+                Día ${dayPlan.day}
+              </span>
+              <span class="text-xs font-semibold ${dayPlan.isBuffer ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}">
+                ${dayPlan.focus}
+              </span>
+            </div>
+
+            <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+              ${dayPlan.blocks.map(b => `
+                <div class="p-1.5 rounded-lg bg-slate-50/70 dark:bg-teaDark-700/40 border border-slate-100 dark:border-slate-700/40">
+                  ${b}
+                </div>
+              `).join('')}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      // VISTA TO-DO IMPRIMIBLE
+      renderPrintable() {
+        const container = document.getElementById('printableTasksContainer');
+        container.innerHTML = '';
+
+        const currentTasks = this.tasks.filter(t => t.cycle === this.currentCycle);
+
+        // Agrupar por proyecto
+        const grouped = {};
+        currentTasks.forEach(task => {
+          if (!grouped[task.project]) grouped[task.project] = [];
+          grouped[task.project].push(task);
+        });
+
+        for (const [project, pTasks] of Object.entries(grouped)) {
+          const section = document.createElement('div');
+          section.className = 'border border-slate-200 dark:border-slate-700 rounded-xl p-4 break-inside-avoid';
+
+          section.innerHTML = `
+            <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+              <h3 class="font-bold text-sm text-slate-800 dark:text-white">${project}</h3>
+              <span class="text-xs text-slate-400">${pTasks.length} bloques</span>
+            </div>
+            <div class="space-y-2 text-xs">
+              ${pTasks.map(t => {
+                const meta = this.getBlockMeta(t.type);
+                const isChecked = t.status === 'done';
+                return `
+                  <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="app.toggleTaskCheckbox('${t.id}', this.checked)" class="mt-0.5 rounded text-sky-600 focus:ring-0">
+                    <span class="${isChecked ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">
+                      ${meta.symbol} ${t.title} <span class="text-slate-400">(${t.duration} min · Día ${t.day})</span>
+                    </span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          `;
+          container.appendChild(section);
+        }
+      }
+
+      toggleTaskCheckbox(taskId, isChecked) {
+        this.setTaskStatus(taskId, isChecked ? 'done' : 'todo');
+      }
+
+      // CREACIÓN DE TAREAS NUEVAS
+      openTaskModal() {
+        document.getElementById('taskModal').classList.remove('hidden');
+        document.getElementById('newTaskCycle').value = this.currentCycle;
+        lucide.createIcons();
+      }
+
+      closeTaskModal() {
+        document.getElementById('taskModal').classList.add('hidden');
+        document.getElementById('newTaskForm').reset();
+      }
+
+      handleCreateTask(e) {
+        e.preventDefault();
+        const project = document.getElementById('newTaskProject').value.trim();
+        const title = document.getElementById('newTaskTitle').value.trim();
+        const type = document.getElementById('newTaskType').value;
+        const duration = parseInt(document.getElementById('newTaskDuration').value, 10);
+        const day = parseInt(document.getElementById('newTaskDay').value, 10);
+        const cycle = parseInt(document.getElementById('newTaskCycle').value, 10);
+
+        const newTask = {
+          id: 'custom-' + Date.now(),
+          project,
+          title,
+          type,
+          duration,
+          day,
+          cycle,
+          status: 'todo'
+        };
+
+        this.tasks.push(newTask);
+        this.saveTasks();
+        this.closeTaskModal();
+        this.renderKanban();
+        this.renderPrintable();
+
+        confetti({
+          particleCount: 30,
+          spread: 40,
+          origin: { y: 0.7 }
+        });
+      }
+
+      // TEMPORIZADOR POMODORO INTEGRADO
+      toggleTimerModal() {
+        const modal = document.getElementById('timerModal');
+        modal.classList.toggle('hidden');
+        lucide.createIcons();
+      }
+
+      setTimerPreset(minutes, label) {
+        this.pauseTimer();
+        this.timer.totalSeconds = minutes * 60;
+        this.timer.remainingSeconds = minutes * 60;
+        this.timer.label = label;
+        document.getElementById('timerModeLabel').textContent = label;
+        this.updateTimerDisplay();
+      }
+
+      startTaskPomodoro(durationMinutes, title) {
+        this.setTimerPreset(durationMinutes, `En foco: ${title.substring(0, 24)}...`);
+        this.toggleTimerModal();
+        this.startTimer();
+      }
+
+      updateTimerDisplay() {
+        const mins = Math.floor(this.timer.remainingSeconds / 60);
+        const secs = this.timer.remainingSeconds % 60;
+        const text = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        document.getElementById('timerDisplay').textContent = text;
+        document.getElementById('timerPill').textContent = `${text} (${this.timer.label.split(' ')[0]})`;
+      }
+
+      toggleTimer() {
+        if (this.timer.isRunning) {
+          this.pauseTimer();
+        } else {
+          this.startTimer();
+        }
+      }
+
+      startTimer() {
+        this.timer.isRunning = true;
+        const btn = document.getElementById('timerToggleBtn');
+        btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> Pausar`;
+        btn.classList.replace('bg-sky-600', 'bg-amber-600');
+        btn.classList.replace('hover:bg-sky-500', 'hover:bg-amber-500');
+        lucide.createIcons();
+
+        this.timer.interval = setInterval(() => {
+          if (this.timer.remainingSeconds > 0) {
+            this.timer.remainingSeconds--;
+            this.updateTimerDisplay();
+          } else {
+            this.pauseTimer();
+            confetti({ particleCount: 70, spread: 80 });
+            alert("⏰ ¡Bloque finalizado! Momento de descansar 5 minutos sin pantalla.");
+          }
+        }, 1000);
+      }
+
+      pauseTimer() {
+        this.timer.isRunning = false;
+        clearInterval(this.timer.interval);
+        const btn = document.getElementById('timerToggleBtn');
+        if (btn) {
+          btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Continuar`;
+          btn.classList.replace('bg-amber-600', 'bg-sky-600');
+          btn.classList.replace('hover:bg-amber-500', 'hover:bg-sky-500');
+          lucide.createIcons();
+        }
+      }
+
+      resetTimer() {
+        this.pauseTimer();
+        this.timer.remainingSeconds = this.timer.totalSeconds;
+        this.updateTimerDisplay();
+      }
+
+      // CIERRE RITUAL
+      saveDailyRitual(e) {
+        e.preventDefault();
+        const data = {
+          advanced: document.getElementById('rit-advanced').value,
+          half: document.getElementById('rit-half').value,
+          next: document.getElementById('rit-next').value,
+          date: new Date().toLocaleDateString()
+        };
+        localStorage.setItem('daily_ritual_data', JSON.stringify(data));
+
+        const notice = document.getElementById('ritualSavedNotice');
+        notice.classList.remove('hidden');
+        setTimeout(() => notice.classList.add('hidden'), 3500);
+
+        confetti({
+          particleCount: 40,
+          spread: 50,
+          origin: { y: 0.6 }
+        });
+      }
+
+      loadDailyRitual() {
+        const stored = localStorage.getItem('daily_ritual_data');
+        if (stored) {
+          try {
+            const data = JSON.parse(stored);
+            document.getElementById('rit-advanced').value = data.advanced || '';
+            document.getElementById('rit-half').value = data.half || '';
+            document.getElementById('rit-next').value = data.next || '';
+          } catch(e) {}
+        }
+      }
     }
 
-    function closeDeleteConfirmModal() {
-      deleteConfirmModal.classList.add('hidden');
-      onConfirmDeleteCallback = null;
-    }
-
-    btnCancelDelete.addEventListener('click', closeDeleteConfirmModal);
-    deleteConfirmModal.addEventListener('click', (e) => {
-      if (e.target === deleteConfirmModal) closeDeleteConfirmModal();
-    });
-
-    btnConfirmDelete.addEventListener('click', () => {
-      if (onConfirmDeleteCallback) {
-        onConfirmDeleteCallback();
-      }
-      closeDeleteConfirmModal();
-    });
-
-    window.deleteTask = function(taskId) {
-      const task = tasks.find(t => t.id === taskId);
-      if (!task) return;
-
-      openDeleteConfirmModal(`¿Estás seguro de que deseas eliminar la tarea "${task.task}"?`, () => {
-        tasks = tasks.filter(t => t.id !== taskId);
-        saveTasks();
-        populateDayFilter();
-        renderAll();
-      });
-    };
-
-    // Inicialización al cargar la página
-    populateDayFilter();
-    renderAll();
+    // Instanciación en carga
+    const app = new CycleApp();
+    window.onload = () => app.init();
   </script>
 </body>
 </html>
