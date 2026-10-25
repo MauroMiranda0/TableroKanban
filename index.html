@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Ejecución 15 Días (TEA/TDA)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sistema de Ejecución 15 Días | Neurodivergente TEA/TDA</title>
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Canvas Confetti for gentle dopamine reward -->
+  <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            blockStart: '#10b981',    // 🟢 Arranque (Emerald)
-            blockDeep: '#3b82f6',     // 🔵 Profundo (Blue)
-            blockMedium: '#f59e0b',   // 🟡 Medio (Amber)
-            blockLight: '#94a3b8',    // ⚪ Ligero (Slate)
-            blockBuffer: '#8b5cf6',   // 🔄 Buffer (Purple)
-            blockRest: '#14b8a6',     // 🧘 Descanso (Teal)
+            brand: {
+              50: '#f0f9ff',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
           }
         }
       }
@@ -30,274 +30,235 @@
   </script>
 
   <style>
-    /* Estilos pensados para baja sobrecarga cognitiva */
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      padding-bottom: env(safe-area-inset-bottom, 1rem);
-    }
-    .custom-scroll::-webkit-scrollbar {
+    /* Estilos de scrollbar suave y sin distracciones */
+    ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
-    .custom-scroll::-webkit-scrollbar-track {
-      background: #f1f5f9;
+    ::-webkit-scrollbar-track {
+      background: #090d16;
     }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
     }
-    /* Animaciones suaves, nunca estroboscópicas */
-    .fade-in {
-      animation: fadeIn 0.25s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .pulse-subtle {
-      animation: subtlePulse 2s infinite ease-in-out;
-    }
-    @keyframes subtlePulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.85; }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
     }
 
-    /* Kanban touch swipe & snap optimizations */
-    .kanban-scroll-container {
+    /* Scroll-snap para Kanban en móviles */
+    .kanban-mobile-scroll {
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
     }
-    .kanban-column-snap {
+    .kanban-mobile-col {
       scroll-snap-align: center;
-      scroll-snap-stop: normal;
+      scroll-snap-stop: always;
     }
 
-    /* Minimum touch targets across mobile */
+    /* Target táctil ergonómico */
     .touch-target-min {
       min-height: 44px;
       min-width: 44px;
     }
 
-    /* Safe area padding utilities */
-    .pb-safe {
-      padding-bottom: max(5rem, calc(4rem + env(safe-area-inset-bottom)));
-    }
-
-    /* ================= ESTILOS ESPECÍFICOS PARA IMPRESIÓN (@media print) ================= */
+    /* Estilos estrictos de impresión física */
     @media print {
       body {
         background-color: #ffffff !important;
         color: #000000 !important;
-        font-size: 11pt !important;
       }
-      /* Ocultar elementos de UI interactiva */
-      header,
-      nav,
-      section:not(#view-tasks),
-      #create-task-form,
-      .no-print,
-      #modal-reset,
-      #toast,
-      #mobile-nav-bar,
-      button {
+      .no-print {
         display: none !important;
       }
-      /* Asegurar que la vista de tareas sea visible */
-      #view-tasks {
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-      }
-      /* Área de impresión personalizada */
-      #print-area {
+      .print-only {
         display: block !important;
       }
-      .print-page-break-avoid {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+      .print-card {
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        margin-bottom: 0.75rem !important;
       }
-      /* Ocultar la tabla de pantalla si imprimimos el formato To-Do optimizado */
-      #screen-tasks-table {
-        display: none !important;
+      .print-text-dark {
+        color: #0f172a !important;
+      }
+      .print-checkbox {
+        border: 2px solid #000000 !important;
+        width: 18px !important;
+        height: 18px !important;
+        display: inline-block !important;
       }
     }
-
     @media screen {
-      #print-area {
-        display: none;
+      .print-only {
+        display: none !important;
       }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900 pb-safe md:pb-10">
+<body class="h-full flex flex-col font-sans antialiased text-slate-200 bg-slate-950 select-none pb-24 md:pb-6">
 
-  <!-- ================= TOPBAR & CYCLE NAVIGATION ================= -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
-        <!-- Logo & Titulo -->
-        <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
-          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg shadow-sm shrink-0">
-            15d
-          </div>
-          <div class="truncate">
-            <h1 class="text-sm sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-1.5 sm:gap-2">
-              <span class="truncate">Sistema TEA/TDA</span>
-              <span id="cycle-badge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 shrink-0">Ciclo 1</span>
-            </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 hidden sm:block truncate">Baja carga ejecutiva · Cero parálisis</p>
-          </div>
+  <!-- ==================== TOPBAR ==================== -->
+  <header class="no-print sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      <!-- Logotipo & Contexto -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm shadow-indigo-500/20">
+          <i data-lucide="compass" class="w-5 h-5"></i>
         </div>
-
-        <!-- Selector de Día Central (Touch target amigable) -->
-        <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-0.5 sm:space-x-1 shrink-0">
-          <button id="btn-prev-day" onclick="changeDay(-1)" title="Día Anterior" class="touch-target-min flex items-center justify-center rounded-lg hover:bg-white text-slate-600 transition active:scale-95">
-            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-          </button>
-          
-          <div class="px-1.5 sm:px-3 text-center min-w-[70px] sm:min-w-[85px]">
-            <span class="text-[9px] sm:text-[10px] text-slate-500 font-medium block uppercase tracking-wider">Día</span>
-            <span id="current-day-label" class="text-xs sm:text-sm font-bold text-slate-800">Día 1</span>
-          </div>
-
-          <button id="btn-next-day" onclick="changeDay(1)" title="Día Siguiente" class="touch-target-min flex items-center justify-center rounded-lg hover:bg-white text-slate-600 transition active:scale-95">
-            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-          </button>
+        <div class="truncate">
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
+            <span>Ciclo 15D</span>
+            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800/60 hidden sm:inline-block">TEA/TDA System</span>
+          </h1>
+          <p class="text-[11px] text-slate-400 truncate">Continuidad · Buffers · Carga Reducida</p>
         </div>
+      </div>
 
-        <!-- Acciones rápidas (Reset & Estado Día) -->
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <span id="day-type-pill" class="text-xs px-2.5 py-1 rounded-full font-medium border hidden lg:inline-flex items-center gap-1.5">
-            <!-- Dinámico -->
-          </span>
-          <button onclick="openModal('modal-reset')" title="Reiniciar datos de fábrica" class="touch-target-min flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition active:scale-95">
-            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+      <!-- Barra Pomodoro Rápida integrada -->
+      <div class="hidden lg:flex items-center gap-3 bg-slate-950/80 px-3 py-1.5 rounded-full border border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <span id="top-timer-display" class="font-mono text-sm font-semibold text-emerald-400">25:00</span>
+          <span id="top-timer-task" class="text-xs text-slate-400 max-w-[140px] truncate">Sin tarea activa</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="top-btn-play" onclick="toggleTimer()" class="p-1 hover:text-white text-slate-300 transition-colors">
+            <i data-lucide="play" class="w-4 h-4"></i>
+          </button>
+          <button onclick="resetTimer()" class="p-1 hover:text-white text-slate-400 transition-colors">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
 
-      <!-- Barra de navegación Desktop (Visible en md+) -->
-      <nav class="hidden md:flex space-x-1 sm:space-x-2 overflow-x-auto custom-scroll py-2 border-t border-slate-100 text-xs sm:text-sm">
-        <button onclick="switchView('focus')" id="nav-focus" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 bg-indigo-50 text-indigo-700 transition">
-          <i data-lucide="target" class="w-4 h-4"></i> Modo Hoy / Foco
+      <!-- Navegación Desktop -->
+      <nav class="hidden md:flex items-center gap-1">
+        <button onclick="switchView('today')" data-nav="today" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-indigo-600 text-white flex items-center gap-1.5">
+          <i data-lucide="sun" class="w-4 h-4"></i><span>Hoy</span>
         </button>
-        <button onclick="switchView('calendar')" id="nav-calendar" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 transition">
-          <i data-lucide="calendar" class="w-4 h-4"></i> Calendario 15 Días
+        <button onclick="switchView('cycle')" data-nav="cycle" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-4 h-4"></i><span>Ciclo (1-15)</span>
         </button>
-        <button onclick="switchView('kanban')" id="nav-kanban" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 transition">
-          <i data-lucide="kanban" class="w-4 h-4"></i> Tablero Kanban
+        <button onclick="switchView('kanban')" data-nav="kanban" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5">
+          <i data-lucide="kanban" class="w-4 h-4"></i><span>Kanban</span>
         </button>
-        <button onclick="switchView('tasks')" id="nav-tasks" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 transition">
-          <i data-lucide="list-plus" class="w-4 h-4"></i> Gestor de Tareas
+        <button onclick="switchView('tasks')" data-nav="tasks" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5">
+          <i data-lucide="check-square" class="w-4 h-4"></i><span>Tareas</span>
         </button>
-        <button onclick="switchView('ritual')" id="nav-ritual" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 transition">
-          <i data-lucide="moon" class="w-4 h-4"></i> Cierre Ritual
+        <button onclick="switchView('ritual')" data-nav="ritual" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5">
+          <i data-lucide="moon" class="w-4 h-4"></i><span>Ritual</span>
         </button>
-        <button onclick="switchView('assets')" id="nav-assets" class="nav-btn px-3 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 transition">
-          <i data-lucide="shield-check" class="w-4 h-4"></i> Activos & Reglas
+        <button onclick="switchView('rules')" data-nav="rules" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-4 h-4"></i><span>Reglas</span>
         </button>
       </nav>
+
+      <!-- Botón Reinicio de Fábrica -->
+      <button onclick="openResetModal()" title="Opciones y reinicio de ciclo" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition-colors touch-target-min flex items-center justify-center">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>
+      </button>
     </div>
   </header>
 
-  <!-- ================= SUB-STRIP: TIMER FLOTANTE COMPACTO ================= -->
-  <section class="bg-indigo-900 text-indigo-100 text-xs sm:text-sm py-2 px-3 sm:px-4 shadow-inner sticky top-14 sm:top-16 z-30">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
-      <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-        <div class="flex items-center gap-2">
-          <i data-lucide="timer" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-          <span class="font-medium text-slate-200 text-xs sm:text-sm">Timer:</span>
-          <span id="timer-display" class="font-mono text-sm sm:text-base font-bold text-white bg-indigo-950 px-2 py-0.5 rounded border border-indigo-700">25:00</span>
-          <span id="timer-mode-label" class="text-xs text-indigo-300 truncate max-w-[110px] sm:max-w-none">(Pomodoro)</span>
-        </div>
-
-        <div class="flex sm:hidden items-center gap-1">
-          <button id="timer-play-btn-mob" onclick="toggleTimer()" class="touch-target-min px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold flex items-center justify-center gap-1 active:scale-95">
-            <i data-lucide="play" class="w-4 h-4"></i>
-          </button>
-          <button onclick="resetTimer()" title="Reiniciar tiempo" class="touch-target-min flex items-center justify-center p-1 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-indigo-300">
-            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-1 sm:gap-1.5 w-full sm:w-auto overflow-x-auto custom-scroll pb-1 sm:pb-0 justify-start sm:justify-end">
-        <button onclick="setTimerPreset(10, '🟢 Arranque')" class="touch-target-min sm:h-auto px-2.5 py-1 rounded bg-indigo-800 hover:bg-indigo-700 text-xs text-emerald-300 font-medium whitespace-nowrap flex items-center justify-center">10m</button>
-        <button onclick="setTimerPreset(25, '🟡 Pomodoro')" class="touch-target-min sm:h-auto px-2.5 py-1 rounded bg-indigo-800 hover:bg-indigo-700 text-xs text-amber-300 font-medium whitespace-nowrap flex items-center justify-center">25m</button>
-        <button onclick="setTimerPreset(50, '🔵 Profundo')" class="touch-target-min sm:h-auto px-2.5 py-1 rounded bg-indigo-800 hover:bg-indigo-700 text-xs text-blue-300 font-medium whitespace-nowrap flex items-center justify-center">50m</button>
-        <button onclick="setTimerPreset(5, '🧘 Descanso')" class="touch-target-min sm:h-auto px-2.5 py-1 rounded bg-indigo-800 hover:bg-indigo-700 text-xs text-teal-300 font-medium whitespace-nowrap flex items-center justify-center">5m desc</button>
-        
-        <div class="hidden sm:block h-4 w-px bg-indigo-700 mx-1"></div>
-
-        <button id="timer-play-btn" onclick="toggleTimer()" class="hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold items-center gap-1.5 active:scale-95 transition">
-          <i data-lucide="play" class="w-3.5 h-3.5"></i> <span id="timer-btn-text">Iniciar</span>
-        </button>
-        <button onclick="resetTimer()" title="Reiniciar tiempo" class="hidden sm:flex p-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-indigo-300 active:scale-95 transition">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
+  <!-- ==================== BANNER MÓVIL DEL TEMPORIZADOR ==================== -->
+  <div class="no-print lg:hidden bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+      <span id="mob-timer-display" class="font-mono text-xs font-bold text-emerald-400">25:00</span>
+      <span id="mob-timer-task" class="text-xs text-slate-400 truncate max-w-[180px]">Sin tarea activa</span>
     </div>
-  </section>
+    <div class="flex items-center gap-1">
+      <button onclick="toggleTimer()" class="p-1.5 bg-slate-800 text-slate-200 rounded hover:bg-slate-700">
+        <i id="mob-timer-icon" data-lucide="play" class="w-3.5 h-3.5"></i>
+      </button>
+      <button onclick="resetTimer()" class="p-1.5 bg-slate-800 text-slate-400 rounded hover:bg-slate-700">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+  </div>
 
-  <!-- ================= CONTENEDOR PRINCIPAL ================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+  <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 md:p-6 overflow-y-auto">
 
-    <!-- ================= VISTA 1: MODO HOY / FOCO DIRECTO ================= -->
-    <section id="view-focus" class="view-panel fade-in space-y-4 sm:space-y-6">
-      
-      <!-- Banner Estado del Día -->
-      <div id="focus-banner" class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div class="w-full md:w-auto">
-          <div class="flex flex-wrap items-center gap-2 mb-1">
-            <span id="focus-day-tag" class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800">Día 1</span>
-            <span id="focus-continuity-tag" class="text-xs text-slate-500 font-medium">Continuidad directa</span>
+    <!-- 1. VISTA: HOY (FOCO DIARIO) -->
+    <section id="view-today" class="space-y-5">
+      <!-- Selector de Día Activo -->
+      <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Día de ejecución</span>
+              <span id="today-badge-type" class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-300">Ejecución ordinaria</span>
+            </div>
+            <h2 id="today-title" class="text-lg sm:text-xl font-bold text-white mt-0.5">Día 1: Proyecto Jocelyn (#1)</h2>
           </div>
-          <h2 id="focus-day-title" class="text-lg sm:text-2xl font-bold text-slate-900 break-words">Jocelyn (#1)</h2>
-          <p id="focus-day-desc" class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">Enfócate en una sola microtarea a la vez. No abras frentes adicionales.</p>
-        </div>
 
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-          <!-- Botón de oro: Salvar atraso mandando a buffer -->
-          <button onclick="sendRemainingToBuffer()" class="touch-target-min px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition flex items-center justify-center gap-2 shadow-xs active:scale-95">
-            <i data-lucide="corner-down-right" class="w-4 h-4 shrink-0"></i> <span>¿Día complicado? Mover pendientes al Buffer</span>
-          </button>
-          <button onclick="switchView('ritual')" class="touch-target-min px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center justify-center gap-2 active:scale-95">
-            <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i> <span>Cierre diario</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Barra de Progreso del Día -->
-      <div class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center text-xs font-semibold text-slate-600 mb-2">
-          <span>Avance del día: <span id="progress-text" class="text-indigo-600 font-bold">0 / 0</span></span>
-          <span id="progress-percent" class="text-slate-500">0%</span>
-        </div>
-        <div class="w-full bg-slate-100 h-2.5 sm:h-3 rounded-full overflow-hidden">
-          <div id="progress-bar-fill" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
-        </div>
-      </div>
-
-      <!-- Buffer Notice (Si hoy es día Buffer) -->
-      <div id="buffer-special-box" class="hidden bg-purple-50 border border-purple-200 rounded-2xl p-4 sm:p-5 text-purple-900">
-        <div class="flex flex-col sm:flex-row items-start gap-3">
-          <div class="p-2 bg-purple-200 text-purple-800 rounded-xl shrink-0">
-            <i data-lucide="refresh-cw" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+          <!-- Selector táctil de día -->
+          <div class="flex items-center gap-2">
+            <button onclick="changeCurrentDay(-1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 touch-target-min flex items-center justify-center">
+              <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <div class="relative">
+              <select id="select-day" onchange="setCurrentDay(parseInt(this.value))" class="bg-slate-800 border border-slate-700 text-white text-xs sm:text-sm font-semibold rounded-xl px-3 py-2 appearance-none pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <!-- Se pobla dinámicamente -->
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <button onclick="changeCurrentDay(1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 touch-target-min flex items-center justify-center">
+              <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
           </div>
-          <div class="flex-1">
-            <h3 class="font-bold text-sm sm:text-base text-purple-950 flex flex-wrap items-center gap-2">
-              <span>Día de Buffer: Cero Culpa</span>
-              <span class="text-[11px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">Regla #8</span>
-            </h3>
-            <p class="text-xs sm:text-sm text-purple-800 mt-1 leading-relaxed">
-              "El buffer no produce, mantiene". Tu único objetivo hoy es recuperar pendientes atrasados. Si estás al día, ejecuta solo una tarea ligera (máx 15 min) o descansa completamente sin pantalla.
+        </div>
+
+        <!-- Banner de Emergencia / Rescate TEA/TDA -->
+        <div id="buffer-salvavidas" class="mt-3.5 p-3 rounded-xl bg-indigo-950/40 border border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-600/30 text-indigo-300 flex items-center justify-center shrink-0">
+              <i data-lucide="life-buoy" class="w-4 h-4"></i>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <span class="font-semibold text-white">¿Bloqueo o día complicado?</span> No reajustes todo el ciclo. El sistema absorbe atrasos automáticamente.
             </p>
-            <div id="buffer-recommended-tasks" class="mt-4 pt-3 border-t border-purple-200/60">
-              <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-purple-700 mb-2">Tareas Ligeras Sugeridas (Elige solo 1 si estás al día):</p>
-              <div id="buffer-light-options" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
-                <!-- Inyectado vía JS -->
+          </div>
+          <button onclick="sendIncompleteToNextBuffer()" class="whitespace-nowrap px-3 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5 touch-target-min">
+            <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+            <span>Mover pendientes al Buffer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Temporizador Integrado Grande -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900/80 to-slate-950 rounded-2xl p-5 border border-slate-800/80 shadow-md">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Temporizador de Foco Sostenido</span>
+            <h3 id="timer-active-task-name" class="text-sm sm:text-base font-semibold text-white truncate max-w-md">Selecciona una tarea abajo</h3>
+            <p id="timer-subtext" class="text-xs text-slate-400">Regla: 25 min foco + 5 min descanso estricto. Máx. 2 tareas profundas.</p>
+          </div>
+
+          <div class="flex items-center gap-4 self-center md:self-auto">
+            <div id="main-timer-display" class="font-mono text-4xl sm:text-5xl font-black tracking-tight text-emerald-400 drop-shadow-sm">
+              25:00
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center gap-1.5">
+                <button onclick="setCustomTimer(10, '🟢 Arranque')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-bold rounded">10m</button>
+                <button onclick="setCustomTimer(25, '🟡 Medio')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold rounded">25m</button>
+                <button onclick="setCustomTimer(50, '🔵 Profundo')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-[11px] font-bold rounded">50m</button>
+                <button onclick="setCustomTimer(5, '🧘 Pausa')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 text-[11px] font-bold rounded">5m</button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button id="main-btn-play" onclick="toggleTimer()" class="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-xs flex items-center justify-center gap-1 transition-colors">
+                  <i data-lucide="play" class="w-3.5 h-3.5"></i> <span>Iniciar</span>
+                </button>
+                <button onclick="resetTimer()" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded">
+                  <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -306,66 +267,70 @@
 
       <!-- Lista de Microtareas del Día -->
       <div>
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-          <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-            <span>Microtareas de Ejecución</span>
-            <span class="text-[11px] font-normal text-slate-400 hidden sm:inline">Paso a paso, sin prisa</span>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <span>Microbloques de hoy</span>
+            <span id="today-tasks-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
           </h3>
-          <button onclick="openAddTaskModal(currentDay)" class="touch-target-min text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1.5 py-1">
-            <i data-lucide="plus" class="w-4 h-4"></i> <span>Agregar microtarea a hoy</span>
-          </button>
+          <span class="text-xs text-slate-400 italic">Clic en ▶ para cargar al temporizador</span>
         </div>
 
-        <div id="today-tasks-container" class="space-y-3">
-          <!-- Inyectado dinámicamente -->
+        <div id="today-tasks-container" class="space-y-2.5">
+          <!-- Se pobla dinámicamente -->
         </div>
       </div>
-    </section>
 
-    <!-- ================= VISTA 2: CALENDARIO 15 DÍAS ================= -->
-    <section id="view-calendar" class="view-panel hidden fade-in space-y-4 sm:space-y-6">
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4 mb-4">
+      <!-- Tareas Ligeras de Buffer Sugeridas (Visible solo en días Buffer) -->
+      <div id="today-buffer-section" class="hidden bg-purple-950/20 border border-purple-800/40 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🔄</span>
           <div>
-            <h2 class="text-lg sm:text-xl font-bold text-slate-900">Mapa del Ciclo de 15 Días</h2>
-            <p class="text-xs sm:text-sm text-slate-500">Estructura fija: 3 bloques de ejecución seguidos de 1 buffer de absorción de impacto.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
-            <span class="flex items-center gap-1 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Ejecución</span>
-            <span class="flex items-center gap-1 text-purple-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> Buffer (D4, D8, D12)</span>
-            <span class="flex items-center gap-1 text-amber-700 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Cierre Ciclo (D15)</span>
+            <h4 class="text-sm font-bold text-purple-200">Menú Ligero de Mantenimiento</h4>
+            <p class="text-xs text-purple-300/80">Regla 8: El buffer no produce, mantiene. Si no hay atrasos pendientes, elige máximo una:</p>
           </div>
         </div>
-
-        <!-- Grid de 15 días: 1 col (muy chico), 2 col (móvil normal), 3 col (tablet), 5 col (desktop) -->
-        <div id="calendar-grid" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <!-- Inyectado vía JS -->
+        <div id="today-buffer-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <!-- Opciones A, B, C dinámicas -->
         </div>
-      </div>
-
-      <!-- Leyenda de principios de calendario -->
-      <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3.5 sm:p-4 text-xs text-indigo-900 leading-relaxed">
-        <h4 class="font-bold mb-1 flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 shrink-0"></i> Continuidad de Contexto (Regla #6)</h4>
-        <p>Trabajamos el mismo frente en días consecutivos (ej. Jocelyn D1-2, Upwork D3 y D5, Documentación D7 y D9, IWM Web D10-11) para evitar la fatiga por cambio de contexto mental típica del TDA/TEA.</p>
       </div>
     </section>
 
-    <!-- ================= VISTA 3: KANBAN BOARD ================= -->
-    <section id="view-kanban" class="view-panel hidden fade-in space-y-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+    <!-- 2. VISTA: CALENDARIO DEL CICLO (15 DÍAS) -->
+    <section id="view-cycle" class="hidden space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
         <div>
-          <h2 class="text-base sm:text-lg font-bold text-slate-900">Tablero Kanban Neurodivergente</h2>
-          <p class="text-xs text-slate-500">Visualiza el flujo. Desliza horizontalmente entre columnas en pantalla táctil.</p>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>Estructura del Ciclo 1 (15 Días)</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">100% Protegido</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Cadencia: D1-3 Ejecución · D4 Buffer · D5-7 Ejecución · D8 Buffer · D9-11 Ejecución · D12 Buffer · D13-14 Ejecución · D15 Buffer + Cierre</p>
         </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <label class="text-xs text-slate-500 font-medium shrink-0">Filtro:</label>
-          <select id="kanban-filter-front" onchange="renderKanban()" class="touch-target-min sm:h-auto w-full sm:w-auto text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+
+      <!-- Grid responsive de 15 Días -->
+      <div id="cycle-grid-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <!-- Render dinámico de las 15 tarjetas -->
+      </div>
+    </section>
+
+    <!-- 3. VISTA: KANBAN -->
+    <section id="view-kanban" class="hidden space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>Tablero Kanban Neurodivergente</span>
+          </h2>
+          <p class="text-xs text-slate-400">1 tarjeta = 1 microbloque. Mueve las tareas según tu avance.</p>
+        </div>
+        <!-- Filtro por Frente -->
+        <div class="flex items-center gap-2">
+          <label for="kanban-frente-filter" class="text-xs text-slate-400 whitespace-nowrap">Frente:</label>
+          <select id="kanban-frente-filter" onchange="renderKanban()" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             <option value="ALL">Todos los frentes</option>
-            <option value="Jocelyn">Jocelyn (Cliente)</option>
-            <option value="Upwork">Upwork (Freelance)</option>
-            <option value="TDD-SDD">TDD-SDD (Desarrollo)</option>
-            <option value="Documentación">Documentación</option>
-            <option value="IWM">IWM (Empresarial)</option>
+            <option value="Cliente">Cliente (Jocelyn)</option>
+            <option value="Freelance">Freelance (Upwork)</option>
+            <option value="Desarrollo">Desarrollo (TDD/Docs)</option>
+            <option value="IWM">IWM (Empresa)</option>
             <option value="MauroMiranda">MauroMiranda (Portafolio)</option>
             <option value="Mirada sin Filtros">Mirada sin Filtros (Proyecto)</option>
             <option value="Personal">Personal</option>
@@ -374,1548 +339,1345 @@
         </div>
       </div>
 
-      <!-- Columnas Kanban con Scroll Horizontal Suave y Snap en Móviles -->
-      <div class="kanban-scroll-container flex lg:grid lg:grid-cols-4 gap-4 overflow-x-auto pb-4 pt-1 items-start">
-        <!-- Col 1: POR HACER -->
-        <div class="kanban-column-snap min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-1 bg-slate-100/90 rounded-2xl p-3 border border-slate-200 flex flex-col max-h-[75vh]">
-          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> POR HACER
-            </span>
-            <span id="count-todo" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0</span>
+      <!-- Contenedor de Columnas (con snap scroll en móvil) -->
+      <div class="kanban-mobile-scroll flex md:grid md:grid-cols-4 gap-3.5 overflow-x-auto pb-4 pt-1">
+        <!-- Columna 1: POR HACER -->
+        <div class="kanban-mobile-col w-[85vw] sm:w-[320px] md:w-auto shrink-0 bg-slate-900/80 rounded-2xl border border-slate-800 flex flex-col max-h-[75vh]">
+          <div class="p-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-slate-300">Por Hacer</span>
+            </div>
+            <span id="kanban-count-todo" class="text-xs bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div id="col-todo" class="space-y-2.5 overflow-y-auto custom-scroll pr-1 flex-1 min-h-[150px]">
-            <!-- Cards -->
-          </div>
+          <div id="kanban-col-todo" class="p-2.5 space-y-2 overflow-y-auto flex-1"></div>
         </div>
 
-        <!-- Col 2: EN CURSO -->
-        <div class="kanban-column-snap min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-1 bg-blue-50/70 rounded-2xl p-3 border border-blue-200 flex flex-col max-h-[75vh]">
-          <div class="flex items-center justify-between pb-2 mb-2 border-b border-blue-200">
-            <span class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> EN CURSO
-            </span>
-            <span id="count-progress" class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">0</span>
+        <!-- Columna 2: EN CURSO -->
+        <div class="kanban-mobile-col w-[85vw] sm:w-[320px] md:w-auto shrink-0 bg-slate-900/80 rounded-2xl border border-indigo-900/40 flex flex-col max-h-[75vh]">
+          <div class="p-3.5 border-b border-indigo-900/40 flex items-center justify-between bg-indigo-950/30 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-indigo-300">En Curso</span>
+            </div>
+            <span id="kanban-count-doing" class="text-xs bg-indigo-900/60 text-indigo-300 font-bold px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div id="col-progress" class="space-y-2.5 overflow-y-auto custom-scroll pr-1 flex-1 min-h-[150px]">
-            <!-- Cards -->
-          </div>
+          <div id="kanban-col-doing" class="p-2.5 space-y-2 overflow-y-auto flex-1"></div>
         </div>
 
-        <!-- Col 3: EN BUFFER -->
-        <div class="kanban-column-snap min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-1 bg-purple-50/70 rounded-2xl p-3 border border-purple-200 flex flex-col max-h-[75vh]">
-          <div class="flex items-center justify-between pb-2 mb-2 border-b border-purple-200">
-            <span class="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> EN BUFFER
-            </span>
-            <span id="count-buffer" class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold">0</span>
+        <!-- Columna 3: EN BUFFER -->
+        <div class="kanban-mobile-col w-[85vw] sm:w-[320px] md:w-auto shrink-0 bg-slate-900/80 rounded-2xl border border-purple-900/40 flex flex-col max-h-[75vh]">
+          <div class="p-3.5 border-b border-purple-900/40 flex items-center justify-between bg-purple-950/30 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-purple-300">En Buffer</span>
+            </div>
+            <span id="kanban-count-buffer" class="text-xs bg-purple-900/60 text-purple-300 font-bold px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div id="col-buffer" class="space-y-2.5 overflow-y-auto custom-scroll pr-1 flex-1 min-h-[150px]">
-            <!-- Cards -->
-          </div>
+          <div id="kanban-col-buffer" class="p-2.5 space-y-2 overflow-y-auto flex-1"></div>
         </div>
 
-        <!-- Col 4: HECHO -->
-        <div class="kanban-column-snap min-w-[280px] sm:min-w-[320px] lg:min-w-0 flex-1 bg-emerald-50/70 rounded-2xl p-3 border border-emerald-200 flex flex-col max-h-[75vh]">
-          <div class="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200">
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> HECHO (Dopamina)
-            </span>
-            <span id="count-done" class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">0</span>
+        <!-- Columna 4: HECHO -->
+        <div class="kanban-mobile-col w-[85vw] sm:w-[320px] md:w-auto shrink-0 bg-slate-900/80 rounded-2xl border border-emerald-900/40 flex flex-col max-h-[75vh]">
+          <div class="p-3.5 border-b border-emerald-900/40 flex items-center justify-between bg-emerald-950/30 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-emerald-300">Hecho</span>
+            </div>
+            <span id="kanban-count-done" class="text-xs bg-emerald-900/60 text-emerald-300 font-bold px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div id="col-done" class="space-y-2.5 overflow-y-auto custom-scroll pr-1 flex-1 min-h-[150px]">
-            <!-- Cards -->
-          </div>
+          <div id="kanban-col-done" class="p-2.5 space-y-2 overflow-y-auto flex-1"></div>
         </div>
       </div>
     </section>
 
-    <!-- ================= VISTA 4: GESTOR & CREADOR DE TAREAS ================= -->
-    <section id="view-tasks" class="view-panel hidden fade-in space-y-4 sm:space-y-6">
-      
-      <!-- Formulario para Nueva Tarea -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm">
-        <h3 class="text-sm sm:text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-          <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-600 shrink-0"></i> Agregar Tarea / Microtarea al Sistema
-        </h3>
-        <p class="text-xs text-slate-500 mb-4 leading-relaxed">"La prioridad la define el usuario; el sistema solo la estructura." Cada microtarea debe ser clara y no ambigua.</p>
+    <!-- 4. VISTA: LISTA MAESTRA DE TAREAS & CREADOR & IMPRESIÓN -->
+    <section id="view-tasks" class="space-y-5">
+      <!-- Barra Superior de Gestión e Impresión -->
+      <div class="no-print bg-slate-900/90 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>Gestor de Tareas y Microbloques</span>
+          </h2>
+          <p class="text-xs text-slate-400">Consulta todos los ciclos, añade nuevas microtareas o imprime la hoja física To-Do.</p>
+        </div>
 
-        <form id="create-task-form" onsubmit="handleCreateTask(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Descripción de la Microtarea *</label>
-            <input type="text" id="task-input-title" required placeholder="Ej. Abrir proyecto + listar qué falta" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Selector de ciclo -->
+          <div class="inline-flex rounded-xl bg-slate-800 p-1 border border-slate-700/80">
+            <button onclick="setFilterCycle(1)" id="btn-cycle-1" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white">Ciclo 1</button>
+            <button onclick="setFilterCycle(2)" id="btn-cycle-2" class="px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white">Ciclo 2</button>
+            <button onclick="setFilterCycle(3)" id="btn-cycle-3" class="px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white">Ciclo 3</button>
+          </div>
+
+          <!-- BOTÓN IMPRIMIR LISTA TO-DO -->
+          <button onclick="triggerPrintTodoList()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition-all flex items-center gap-1.5 touch-target-min">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Imprimir To-Do</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario para Crear Nueva Tarea -->
+      <div class="no-print bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Añadir Microtarea al Sistema</span>
+          </h3>
+          <span class="text-[11px] text-slate-400">Desglose neurodivergente ejecutable</span>
+        </div>
+
+        <form id="form-new-task" onsubmit="handleCreateTask(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5">
+          <div class="sm:col-span-2 md:col-span-2">
+            <input type="text" id="new-task-title" required placeholder="Descripción ejecutable de la microtarea..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Frente de Activo *</label>
-            <select id="task-input-front" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-              <option value="Jocelyn">Jocelyn (Cliente)</option>
-              <option value="Upwork">Upwork (Freelance)</option>
-              <option value="TDD-SDD">TDD-SDD (Desarrollo)</option>
-              <option value="Documentación">Documentación</option>
+            <select id="new-task-frente" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="Cliente">Cliente (Jocelyn)</option>
+              <option value="Freelance">Freelance (Upwork)</option>
+              <option value="Desarrollo">Desarrollo (TDD/Docs)</option>
               <option value="IWM">IWM (Empresa)</option>
               <option value="MauroMiranda">MauroMiranda (Portafolio)</option>
-              <option value="Mirada sin Filtros">Mirada sin Filtros (Proyecto)</option>
+              <option value="Mirada sin Filtros">Mirada sin Filtros</option>
               <option value="Personal">Personal Mauricio</option>
               <option value="Mantenimiento">Mantenimiento</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Bloque *</label>
-            <select id="task-input-type" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500" onchange="autoFillDuration()">
+            <select id="new-task-type" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="🟢 Arranque">🟢 Arranque (5-10 min)</option>
               <option value="🔵 Profundo">🔵 Profundo (50 min)</option>
               <option value="🟡 Medio">🟡 Medio (25 min)</option>
               <option value="⚪ Ligero">⚪ Ligero (10-15 min)</option>
-              <option value="🔄 Buffer">🔄 Buffer (Recuperación)</option>
-              <option value="🧘 Cierre">🧘 Cierre / Descanso (5 min)</option>
+              <option value="🔄 Buffer">🔄 Buffer (Mantención)</option>
+              <option value="🧘 Cierre">🧘 Cierre / Ritual (5 min)</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Duración (min) *</label>
-            <input type="number" id="task-input-duration" value="10" min="1" max="180" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Asignar a Ciclo *</label>
-            <select id="task-input-cycle" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-              <option value="1">Ciclo 1 (En curso)</option>
-              <option value="2">Ciclo 2 (Siguiente)</option>
-              <option value="3">Ciclo 3 (Posterior)</option>
+            <select id="new-task-day" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="1">Día 1</option>
+              <option value="2">Día 2</option>
+              <option value="3">Día 3</option>
+              <option value="4">Día 4 (Buffer)</option>
+              <option value="5">Día 5</option>
+              <option value="6">Día 6</option>
+              <option value="7">Día 7</option>
+              <option value="8">Día 8 (Buffer)</option>
+              <option value="9">Día 9</option>
+              <option value="10">Día 10</option>
+              <option value="11">Día 11</option>
+              <option value="12">Día 12 (Buffer)</option>
+              <option value="13">Día 13</option>
+              <option value="14">Día 14</option>
+              <option value="15">Día 15 (Buffer + Cierre)</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Día asignado (1 al 15)</label>
-            <input type="number" id="task-input-day" value="1" min="1" max="15" class="touch-target-min sm:h-auto w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div class="sm:col-span-2 lg:col-span-1 flex items-end">
-            <button type="submit" class="touch-target-min w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition active:scale-95 flex items-center justify-center">
-              Guardar Tarea
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm touch-target-min">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Agregar</span>
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Visor de Tareas por Ciclo -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">Listado Maestro de Tareas</h3>
-            <p class="text-xs text-slate-500">Visualiza, filtra o imprime tu lista física para marcar con lápiz.</p>
+      <!-- FORMATO IMPRIMIBLE Y LISTA DE TAREAS -->
+      <div id="print-sheet-header" class="print-only mb-6">
+        <div class="border-b-2 border-black pb-3">
+          <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-black text-black">LISTA DE TAREAS TO-DO — SISTEMA 15 DÍAS</h1>
+            <span class="text-xs border border-black px-2 py-1 font-mono uppercase" id="print-cycle-label">CICLO 1</span>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Botón de Imprimir Lista To-Do -->
-            <button onclick="printTaskList()" class="touch-target-min px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95">
-              <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i> <span>Imprimir Lista To-Do</span>
+          <p class="text-xs text-slate-700 mt-1">Estructura Neurodivergente TEA/TDA · Máximo 2 profundas/día · Buffers cada 4 días</p>
+        </div>
+      </div>
+
+      <!-- Contenedor Maestro de Tareas agrupadas -->
+      <div id="tasks-master-list" class="space-y-4">
+        <!-- Render dinámico agrupado por Tarea / Frente -->
+      </div>
+
+      <!-- Pie de página para impresión con Checklist de Ritual -->
+      <div class="print-only mt-8 pt-4 border-t-2 border-black space-y-4">
+        <h4 class="font-bold text-xs uppercase tracking-wider text-black">Checklist de Cierre Ritual Diario (Marcar con pluma):</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>□ ¿Qué avanzó hoy? (1 línea escrita)</div>
+          <div>□ Mover tarjetas en el tablero</div>
+          <div>□ ¿Qué quedó a medias? → ¿Va al Buffer?</div>
+          <div>□ Cerrar pestañas y archivos del día</div>
+          <div>□ ¿Primera tarea de mañana? (anotarla abajo)</div>
+          <div>□ Pausa real sin pantallas (10 min)</div>
+        </div>
+        <div class="border border-dashed border-black p-3 rounded mt-2">
+          <p class="text-[11px] font-bold">Primera tarea minúscula de mañana:</p>
+          <div class="h-6"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. VISTA: RITUAL DIARIO Y CIERRE DE CICLO -->
+    <section id="view-ritual" class="hidden space-y-5">
+      <!-- Ritual Diario -->
+      <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0">
+            <i data-lucide="moon" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Checklist de Cierre Ritual Diario (5 min)</h3>
+            <p class="text-xs text-slate-400">Regla 7: Cierre ritual diario sin pantalla posterior. Desactiva la rumiación nocturna.</p>
+          </div>
+        </div>
+
+        <div class="space-y-2.5" id="daily-ritual-checklist">
+          <!-- Items del ritual diario -->
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-white">¿Qué avanzó hoy?</span>
+              <p class="text-slate-400 mt-0.5">Escribe o reconoce conscientemente 1 línea de avance.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-white">¿Qué quedó a medias?</span>
+              <p class="text-slate-400 mt-0.5">Si algo no terminó, déjalo ir hacia el buffer más cercano. No te castigues.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-white">Anotar la primera tarea de mañana</span>
+              <p class="text-slate-400 mt-0.5">Debe ser una tarea minúscula de arranque (🟢 5-10 min) para romper la inercia.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-white">Mover tarjetas en el Kanban</span>
+              <p class="text-slate-400 mt-0.5">Verifica que lo realizado esté en 'Hecho' (dopamina visual).</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-white">Cerrar todas las pestañas y archivos del día</span>
+              <p class="text-slate-400 mt-0.5">Limpia el espacio digital de trabajo para evitar sobrecarga sensorial mañana.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 cursor-pointer hover:bg-slate-800">
+            <input type="checkbox" class="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 bg-slate-900 border-slate-700">
+            <div class="text-xs">
+              <span class="font-semibold text-teal-300">Descanso real sin pantallas</span>
+              <p class="text-slate-400 mt-0.5">Al menos 10 minutos de desconexión sensorial total.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Cierre Ritual de Ciclo (Día 15) -->
+      <div class="bg-gradient-to-br from-purple-950/40 via-slate-900 to-slate-900 rounded-2xl border border-purple-800/60 p-5 space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-purple-800/40">
+          <div class="w-8 h-8 rounded-xl bg-purple-600/30 text-purple-300 flex items-center justify-center shrink-0">
+            <i data-lucide="flag" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Cierre de Ciclo Completo (Día 15)</h3>
+            <p class="text-xs text-purple-300/80">Revisión de ciclo, traslado de no completados y bienvenida al Ciclo 2.</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 bg-purple-950/30 rounded-xl border border-purple-900/40 text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-purple-300">Regla 3:</span> Lo que no se terminó no se fuerza reajustando el ciclo en curso; se mueve al ciclo siguiente de forma natural y sin culpa.
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <button onclick="transferIncompleteToNextCycle()" class="flex-1 py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow flex items-center justify-center gap-2 touch-target-min">
+              <i data-lucide="forward" class="w-4 h-4"></i>
+              <span>Mover pendientes del Ciclo 1 al Ciclo 2</span>
             </button>
-            <span class="text-xs text-slate-400 hidden sm:inline">|</span>
-            <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
-              <button onclick="filterMasterCycle(1)" id="btn-master-c1" class="touch-target-min sm:h-auto px-3 py-1 rounded-md bg-white text-indigo-700 shadow-xs">C1</button>
-              <button onclick="filterMasterCycle(2)" id="btn-master-c2" class="touch-target-min sm:h-auto px-3 py-1 rounded-md text-slate-600">C2</button>
-              <button onclick="filterMasterCycle(3)" id="btn-master-c3" class="touch-target-min sm:h-auto px-3 py-1 rounded-md text-slate-600">C3</button>
-            </div>
+            <button onclick="setFilterCycle(2); switchView('tasks');" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 touch-target-min">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+              <span>Explorar Tareas del Ciclo 2</span>
+            </button>
           </div>
-        </div>
-
-        <!-- Tabla en pantalla con scroll táctil fluido -->
-        <div id="screen-tasks-table" class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table class="w-full text-left text-xs border-collapse min-w-[620px]">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 uppercase font-semibold">
-                <th class="py-2.5 px-3">Estado</th>
-                <th class="py-2.5 px-3">Tipo / Símbolo</th>
-                <th class="py-2.5 px-3">Descripción</th>
-                <th class="py-2.5 px-3">Frente</th>
-                <th class="py-2.5 px-3">Día</th>
-                <th class="py-2.5 px-3">Duración</th>
-                <th class="py-2.5 px-3 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="master-tasks-tbody" class="divide-y divide-slate-100 text-slate-700">
-              <!-- Renderizado vía JS -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Contenedor Especial Preparado para Impresión Física -->
-        <div id="print-area">
-          <!-- Inyectado vía preparePrintView() antes de imprimir -->
         </div>
       </div>
     </section>
 
-    <!-- ================= VISTA 5: CIERRE RITUAL DIARIO & CICLO ================= -->
-    <section id="view-ritual" class="view-panel hidden fade-in space-y-4 sm:space-y-6">
-      
-      <!-- Cierre Diario Ordinario -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
-          <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <i data-lucide="moon" class="w-5 h-5 text-indigo-600 shrink-0"></i> Checklist de Cierre Ritual Diario (5 min)
-            </h2>
-            <p class="text-xs text-slate-500">Regla #7: Cierre ritual diario. Cierra el ciclo mental, apaga la rumiación nocturna.</p>
-          </div>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-full self-start sm:self-center">
-            Día actual: <span id="ritual-day-num">1</span>
-          </span>
-        </div>
-
-        <div class="space-y-3" id="daily-ritual-checklist">
-          <!-- Item 1 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <input type="checkbox" id="rit-1" class="mt-1 w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-            <div class="flex-1 text-xs">
-              <label for="rit-1" class="font-bold text-slate-800 block">1. ¿Qué avanzó hoy? (1 línea sin juzgar)</label>
-              <input type="text" id="rit-advanced-note" placeholder="Ej. Se abrió el proyecto y se avanzaron los primeros 2 archivos..." class="mt-1.5 w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <!-- Item 2 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <input type="checkbox" id="rit-2" class="mt-1 w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-            <div class="flex-1 text-xs">
-              <label for="rit-2" class="font-bold text-slate-800 block">2. ¿Qué quedó a medias? → ¿Va al Buffer más cercano?</label>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                <span class="text-slate-500">Si algo no se completó hoy, no pasa nada:</span>
-                <button onclick="sendRemainingToBuffer()" class="touch-target-min sm:h-auto px-2.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold rounded-lg text-xs transition active:scale-95 text-left">
-                  Mover pendientes de hoy al Buffer
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Item 3 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <input type="checkbox" id="rit-3" class="mt-1 w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-            <div class="flex-1 text-xs">
-              <label for="rit-3" class="font-bold text-slate-800 block">3. ¿Cuál es la primera tarea minúscula de arranque de mañana?</label>
-              <input type="text" id="rit-tomorrow-note" placeholder="Ej. Solo abrir el archivo index.html y releer la función..." class="mt-1.5 w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <!-- Item 4 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <input type="checkbox" id="rit-4" class="mt-1 w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-            <div class="flex-1 text-xs">
-              <label for="rit-4" class="font-bold text-slate-800 block">4. Tablero actualizado</label>
-              <p class="text-slate-500 leading-relaxed">Verifica que las tarjetas hechas estén en HECHO para fijar la dopamina.</p>
-            </div>
-          </div>
-
-          <!-- Item 5 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <input type="checkbox" id="rit-5" class="mt-1 w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-            <div class="flex-1 text-xs">
-              <label for="rit-5" class="font-bold text-slate-800 block">5. Cerrar pestañas y archivos del día</label>
-              <p class="text-slate-500 leading-relaxed">Cero pestañas acumuladas. Salvar contexto y cerrar navegador/editor.</p>
-            </div>
-          </div>
-
-          <!-- Item 6 -->
-          <div class="flex items-start gap-3 p-3 rounded-xl bg-teal-50 border border-teal-200">
-            <input type="checkbox" id="rit-6" class="mt-1 w-5 h-5 rounded text-teal-600 focus:ring-teal-500 border-teal-300">
-            <div class="flex-1 text-xs text-teal-900">
-              <label for="rit-6" class="font-bold block">6. Descanso real (sin pantalla)</label>
-              <p class="text-teal-700 leading-relaxed">Caminar, tomar agua, estirarse. Desconectar la atención ejecutiva.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-2 flex justify-end">
-          <button onclick="saveDailyRitual()" class="touch-target-min w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs active:scale-95">
-            <i data-lucide="check" class="w-4 h-4"></i> Guardar Cierre de Hoy y Avanzar de Día
-          </button>
-        </div>
-      </div>
-
-      <!-- Checklist Especial Día 15 (Cierre de Ciclo) -->
-      <div id="cycle-15-closure-box" class="bg-amber-50 rounded-2xl p-4 sm:p-5 border border-amber-300 shadow-sm space-y-4">
-        <div class="flex items-center gap-2 text-amber-900 font-bold text-sm sm:text-base">
-          <i data-lucide="award" class="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 shrink-0"></i>
-          <span>Checklist Extra: Cierre de Ciclo (Día 15)</span>
-        </div>
-        <p class="text-xs text-amber-800 leading-relaxed">
-          El ciclo de 15 días concluye. "Lo no terminado se mueve al ciclo siguiente, no se reajusta el ciclo en curso ni se siente culpa."
-        </p>
-
-        <div class="space-y-2.5 text-xs text-amber-950">
-          <label class="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-amber-200">
-            <input type="checkbox" id="c15-1" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
-            <span><strong>Revisar balance general:</strong> Qué tareas quedaron hechas, qué quedó en buffer y qué no se tocó.</span>
-          </label>
-          <label class="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-amber-200">
-            <input type="checkbox" id="c15-2" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
-            <span><strong>Traspaso limpio:</strong> Mover todo lo pendiente o en buffer al Ciclo 2 con un solo clic.</span>
-          </label>
-          <label class="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-amber-200">
-            <input type="checkbox" id="c15-3" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
-            <span><strong>Prioridad del Ciclo 2:</strong> IG IWM (#7), FB personal Mauricio (#8), Blog de "Mirada sin Filtros" (#10), Orden de chats IAs (#12).</span>
-          </label>
-          <label class="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-amber-200">
-            <input type="checkbox" id="c15-4" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
-            <span><strong>Definir primera microtarea del Día 1 del Ciclo 2:</strong> (Debe ser una tarea minúscula de arranque de 5-10 min).</span>
-          </label>
-        </div>
-
-        <div class="pt-2 flex flex-wrap gap-2 justify-end">
-          <button onclick="transferPendingToCycle2()" class="touch-target-min w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs active:scale-95">
-            <i data-lucide="arrow-right-circle" class="w-4 h-4"></i> Mover Pendientes al Ciclo 2 y Cerrar
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= VISTA 6: INVENTARIO DE ACTIVOS & REGLAS ================= -->
-    <section id="view-assets" class="view-panel hidden fade-in space-y-4 sm:space-y-6">
-      
-      <!-- Alerta Regla Inviolable de Separación -->
-      <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 sm:p-5 text-rose-950">
-        <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-rose-900 flex items-center gap-2 mb-2">
-          <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 shrink-0"></i> Regla de Separación Inviolable
+    <!-- 6. VISTA: REGLAS DE ORO & ACTIVOS -->
+    <section id="view-rules" class="hidden space-y-5">
+      <!-- 10 Principios de Oro -->
+      <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+          <span>10 Principios de Diseño TEA/TDA</span>
         </h3>
-        <p class="text-xs sm:text-sm font-medium leading-relaxed">
-          <strong>"Mirada sin Filtros"</strong> NO se enlaza al portafolio de <strong>MauroMiranda</strong> ni a <strong>IWM</strong>.<br class="hidden sm:inline">
-          Son tres frentes totalmente distintos e independientes:
-        </p>
-        <ul class="list-disc pl-5 mt-2 space-y-1 text-xs text-rose-900 font-semibold leading-relaxed">
-          <li><strong>IWM (Empresa):</strong> FB IWM + IG IWM + Sitio Web IWM.</li>
-          <li><strong>MauroMiranda (Portafolio Profesional):</strong> Portafolio personal + su propio Blog técnico.</li>
-          <li><strong>Mirada sin Filtros (Proyecto Neurodivergente):</strong> Fanpage FB + Blog neurodivergente propio (Ciclo 2) + Libro (Ciclo 3). Sin Instagram.</li>
-          <li><strong>FB Personal Mauricio Vergara:</strong> Frente personal independiente (Ciclo 2).</li>
-        </ul>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">1. Bloques de 25 min + 5 min</span>
+            <p class="text-slate-400">Descanso estricto obligatorio. Previene la fatiga ejecutiva acumulada.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">2. Máximo 2 tareas profundas por día</span>
+            <p class="text-slate-400">La energía cognitiva es un recurso finito; sobrepasarlo causa bloqueo total.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">3. 1 tarea de arranque siempre primero</span>
+            <p class="text-slate-400">🟢 5 a 10 min para romper la inercia sin generar resistencia cerebral.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">4. Buffers cada 4 días</span>
+            <p class="text-slate-400">El sistema asume que algo fallará. El margen está construido de antemano.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">5. Nunca dos bloques profundos seguidos</span>
+            <p class="text-slate-400">Siempre intercalar una pausa, un bloque medio o una tarea ligera.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">6. Continuidad de contexto</span>
+            <p class="text-slate-400">Mismo proyecto en días consecutivos para no pagar el costo de reenganche.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">7. Cierre ritual diario</span>
+            <p class="text-slate-400">5 minutos para cerrar el día, evitar el pensamiento rumiante y descansar.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">8. Buffer no produce, mantiene</span>
+            <p class="text-slate-400">Solo recupera, ordena o descansa. Jamás se inicia un frente nuevo en buffer.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">9. Si un día falla → Buffer más cercano</span>
+            <p class="text-slate-400">No se reajusta el calendario completo. Cero efecto dominó por atrasos.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
+            <span class="font-bold text-indigo-400">10. La prioridad la decide el usuario</span>
+            <p class="text-slate-400">El sistema aporta estructura ejecutiva; tú mantienes la autonomía total.</p>
+          </div>
+        </div>
       </div>
 
-      <!-- Tabla Inventario Real de Activos con Scroll Horizontal en móvil -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
-        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-          <i data-lucide="layers" class="w-5 h-5 text-indigo-600 shrink-0"></i> Inventario Real de Activos (Corregido)
-        </h3>
-        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table class="w-full text-xs text-left border-collapse min-w-[550px]">
-            <thead>
-              <tr class="bg-slate-100 text-slate-600 uppercase font-bold border-b border-slate-200">
-                <th class="py-2.5 px-3">Activo</th>
-                <th class="py-2.5 px-3">Tipo</th>
-                <th class="py-2.5 px-3">¿Quién lo usa?</th>
-                <th class="py-2.5 px-3">Relación con otros</th>
+      <!-- Inventario de Activos y Regla de Separación -->
+      <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="layers" class="w-5 h-5 text-indigo-400"></i>
+            <span>Inventario de Activos y Separación Estricta</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Regla fundamental: "Mirada sin Filtros" es un frente independiente y jamás se enlaza a MauroMiranda ni a IWM.</p>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-800/70 text-slate-200 uppercase font-bold text-[11px]">
+              <tr>
+                <th class="p-3">Activo</th>
+                <th class="p-3">Tipo</th>
+                <th class="p-3">Uso / Enfoque</th>
+                <th class="p-3">Relación con otros</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 text-slate-700">
+            <tbody class="divide-y divide-slate-800/60 bg-slate-900/40">
               <tr>
-                <td class="py-2.5 px-3 font-semibold">FB personal — Mauricio Vergara</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Personal</span></td>
-                <td class="py-2.5 px-3">Mauricio</td>
-                <td class="py-2.5 px-3">Independiente</td>
+                <td class="p-3 font-semibold text-white">FB personal</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Personal</span></td>
+                <td class="p-3">Mauricio Vergara</td>
+                <td class="p-3 text-slate-400">Independiente (Ciclo 2, #8)</td>
               </tr>
               <tr>
-                <td class="py-2.5 px-3 font-semibold">FB empresarial — IWM</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700">Empresarial</span></td>
-                <td class="py-2.5 px-3">IWM</td>
-                <td class="py-2.5 px-3">Par de IG empresarial IWM + web IWM</td>
+                <td class="p-3 font-semibold text-white">FB empresarial</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-300">Empresarial</span></td>
+                <td class="p-3">IWM</td>
+                <td class="p-3 text-slate-400">Par de IG IWM + Web IWM</td>
               </tr>
               <tr>
-                <td class="py-2.5 px-3 font-semibold">Instagram empresarial — IWM</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700">Empresarial</span></td>
-                <td class="py-2.5 px-3">IWM</td>
-                <td class="py-2.5 px-3">Espejo de FB IWM</td>
+                <td class="p-3 font-semibold text-white">IG empresarial</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-300">Empresarial</span></td>
+                <td class="p-3">IWM</td>
+                <td class="p-3 text-slate-400">Espejo de FB IWM</td>
               </tr>
               <tr>
-                <td class="py-2.5 px-3 font-semibold">Página web — IWM</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700">Empresarial</span></td>
-                <td class="py-2.5 px-3">IWM</td>
-                <td class="py-2.5 px-3">Par de FB/IG IWM</td>
+                <td class="p-3 font-semibold text-white">Página web IWM</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-300">Empresarial</span></td>
+                <td class="p-3">IWM</td>
+                <td class="p-3 text-slate-400">Par de FB/IG IWM</td>
               </tr>
               <tr>
-                <td class="py-2.5 px-3 font-semibold">Portafolio profesional — MauroMiranda</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Profesional</span></td>
-                <td class="py-2.5 px-3">Mauro</td>
-                <td class="py-2.5 px-3">Tiene su propio blog (independiente de "Mirada sin Filtros")</td>
+                <td class="p-3 font-semibold text-white">Portafolio profesional</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300">Profesional</span></td>
+                <td class="p-3">MauroMiranda</td>
+                <td class="p-3 text-slate-400">Tiene su propio blog profesional (#6)</td>
               </tr>
               <tr>
-                <td class="py-2.5 px-3 font-semibold text-purple-900">Página FB — "Mirada sin Filtros"</td>
-                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800">Proyecto nuevo</span></td>
-                <td class="py-2.5 px-3">Proyecto TEA/TDA</td>
-                <td class="py-2.5 px-3">Independiente. Sin IG. Tendrá blog en C2 y libro en C3</td>
+                <td class="p-3 font-semibold text-indigo-300">Página "Mirada sin Filtros"</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">Proyecto Nuevo</span></td>
+                <td class="p-3 text-indigo-200">Proyecto neurodivergente</td>
+                <td class="p-3 text-indigo-300">Independiente. Sin IG. Blog y libro propios por fases.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Los 10 Principios de Diseño TEA/TDA -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
-        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-          <i data-lucide="compass" class="w-5 h-5 text-indigo-600 shrink-0"></i> Los 10 Principios de Oro (Reglas del Sistema)
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs leading-relaxed">
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">1. Bloques de 25 min + 5 min</span>
-            Descanso obligatorio. Sin negociación. La mente necesita enfriarse.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">2. Máximo 2 tareas profundas/día</span>
-            Evita el sobrecalentamiento cognitivo y el colapso ejecutivo.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">3. 1 tarea de arranque (5-10 min)</span>
-            Siempre primero. Minúscula y ridículamente fácil para romper la inercia.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">4. Buffers cada 4 días</span>
-            El sistema asume que algo fallará. El margen está planificado por diseño.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">5. Nunca dos bloques profundos seguidos</span>
-            Intercalar con descansos o tareas ligeras de checklist.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">6. Continuidad de contexto</span>
-            Mismo proyecto en días consecutivos. Reduce fricción de reapertura de contexto.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">7. Cierre ritual diario (5 min)</span>
-            Desconectar deliberadamente para detener rumiaciones mentales.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">8. Buffer no produce, mantiene</span>
-            Solo recupera atrasos, ordena o descansa. Nunca abre proyectos nuevos.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">9. Si un día falla → Buffer más cercano</span>
-            No se reajusta todo el calendario ni se castiga el ritmo. Va al buffer.
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-            <span class="font-bold text-indigo-700 block mb-1">10. La prioridad la decide el usuario</span>
-            El sistema solo estructura los bloques para hacerlos biológicamente viables.
-          </div>
-        </div>
-      </div>
     </section>
-
   </main>
 
-  <!-- ================= BARRA DE NAVEGACIÓN INFERIOR (MÓVIL / TÁCTIL) ================= -->
-  <nav id="mobile-nav-bar" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 shadow-lg flex items-center justify-around">
-    <button onclick="switchView('focus')" id="m-nav-focus" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-indigo-600 transition flex-1">
-      <i data-lucide="target" class="w-5 h-5 mb-0.5"></i>
-      <span>Hoy</span>
+  <!-- ==================== BARRA DE NAVEGACIÓN MÓVIL (TOUCH BOTTOM BAR) ==================== -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-2xl pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+    <button onclick="switchView('today')" id="mob-nav-today" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-indigo-400">
+      <i data-lucide="sun" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold">Hoy</span>
     </button>
-    <button onclick="switchView('calendar')" id="m-nav-calendar" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-slate-500 transition flex-1">
-      <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
-      <span>Ciclo</span>
+    <button onclick="switchView('cycle')" id="mob-nav-cycle" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Ciclo</span>
     </button>
-    <button onclick="switchView('kanban')" id="m-nav-kanban" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-slate-500 transition flex-1">
-      <i data-lucide="kanban" class="w-5 h-5 mb-0.5"></i>
-      <span>Kanban</span>
+    <button onclick="switchView('kanban')" id="mob-nav-kanban" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="kanban" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Kanban</span>
     </button>
-    <button onclick="switchView('tasks')" id="m-nav-tasks" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-slate-500 transition flex-1">
-      <i data-lucide="list-plus" class="w-5 h-5 mb-0.5"></i>
-      <span>Tareas</span>
+    <button onclick="switchView('tasks')" id="mob-nav-tasks" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="check-square" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Tareas</span>
     </button>
-    <button onclick="switchView('ritual')" id="m-nav-ritual" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-slate-500 transition flex-1">
-      <i data-lucide="moon" class="w-5 h-5 mb-0.5"></i>
-      <span>Ritual</span>
+    <button onclick="switchView('ritual')" id="mob-nav-ritual" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="moon" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Ritual</span>
     </button>
-    <button onclick="switchView('assets')" id="m-nav-assets" class="touch-target-min flex flex-col items-center justify-center text-[10px] font-semibold text-slate-500 transition flex-1">
-      <i data-lucide="shield-check" class="w-5 h-5 mb-0.5"></i>
-      <span>Reglas</span>
+    <button onclick="switchView('rules')" id="mob-nav-rules" class="flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="shield-check" class="w-5 h-5"></i>
+      <span class="text-[10px] font-semibold">Reglas</span>
     </button>
   </nav>
 
-  <!-- ================= MODAL: REINICIAR DATOS (BOTTOM SHEET EN MÓVIL, MODAL EN DESKTOP) ================= -->
-  <div id="modal-reset" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-xl border border-slate-200 fade-in text-center">
-      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3">
-        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+  <!-- ==================== MODAL DE REINICIO DE DATOS ==================== -->
+  <div id="modal-reset" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white">Reinicio de Datos</h4>
+          <p class="text-xs text-slate-400">Opciones de configuración del sistema</p>
+        </div>
       </div>
-      <h3 class="font-bold text-base text-slate-900 mb-1">¿Restablecer datos de fábrica?</h3>
-      <p class="text-xs text-slate-500 mb-5 leading-relaxed">
-        Se volverán a cargar las tareas y el calendario oficial del Ciclo 1 (Jocelyn, Upwork, TDD-SDD, etc.). Tu progreso manual se reiniciará.
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Puedes restablecer las tareas al estado inicial de fábrica del Ciclo 1 manteniendo intacta la metodología.
       </p>
-      <div class="flex flex-col-reverse sm:flex-row gap-2">
-        <button onclick="closeModal('modal-reset')" class="touch-target-min flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 transition">
-          Cancelar
+      <div class="flex flex-col gap-2 pt-1">
+        <button onclick="resetToFactoryData()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow touch-target-min">
+          Restablecer Todo de Fábrica
         </button>
-        <button onclick="executeFactoryReset()" class="touch-target-min flex-1 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white active:scale-95 transition">
-          Sí, restablecer
+        <button onclick="closeResetModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold touch-target-min">
+          Cancelar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ================= NOTIFICACIÓN TOAST ================= -->
-  <div id="toast" class="fixed bottom-20 sm:bottom-4 right-4 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg transform translate-y-16 opacity-0 transition-all duration-300 flex items-center gap-2 max-w-[90vw] sm:max-w-md">
-    <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-    <span id="toast-text" class="truncate">Acción completada</span>
-  </div>
-
-  <!-- ================= JAVASCRIPT PRINCIPAL ================= -->
+  <!-- ==================== JAVASCRIPT REACTIVO Y PERSISTENTE ==================== -->
   <script>
-    /* ================= DATOS MAESTROS INICIALES ================= */
+    // ----------------------------------------------------
+    // BASE DE DATOS INICIAL (CICLOS 1, 2 Y 3)
+    // ----------------------------------------------------
     const INITIAL_TASKS = [
-      // DÍA 1: Jocelyn (#1)
-      { id: "t-1", title: "Abrir proyecto y listar en post-it qué falta", type: "🟢 Arranque", duration: 10, front: "Jocelyn", day: 1, cycle: 1, status: "TODO" },
-      { id: "t-2", title: "Elegir UNA subtarea y escribirla como 'terminado cuando...'", type: "🔵 Profundo", duration: 50, front: "Jocelyn", day: 1, cycle: 1, status: "TODO" },
-      { id: "t-3", title: "Ejecutar esa subtarea", type: "🔵 Profundo", duration: 50, front: "Jocelyn", day: 1, cycle: 1, status: "TODO" },
-      { id: "t-4", title: "Documentar avance en tracker visible", type: "🟡 Medio", duration: 25, front: "Jocelyn", day: 1, cycle: 1, status: "TODO" },
-      { id: "t-5", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Jocelyn", day: 1, cycle: 1, status: "TODO" },
+      // CICLO 1: #1 - Proyecto Jocelyn
+      { id: 'c1-t1-1', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 1, tipo: '🟢 Arranque', duracion: 10, text: 'Abrir proyecto y listar en post-it qué falta', status: 'todo' },
+      { id: 'c1-t1-2', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 1, tipo: '🔵 Profundo', duracion: 50, text: 'Elegir UNA subtarea y escribirla como "terminado cuando..."', status: 'todo' },
+      { id: 'c1-t1-3', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 1, tipo: '🔵 Profundo', duracion: 50, text: 'Ejecutar esa subtarea', status: 'todo' },
+      { id: 'c1-t1-4', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 1, tipo: '🟡 Medio', duracion: 25, text: 'Documentar avance en tracker visible', status: 'todo' },
+      { id: 'c1-t1-5', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 2, tipo: '🟢 Arranque', duracion: 5, text: 'Releer subtarea + abrir archivo exacto', status: 'todo' },
+      { id: 'c1-t1-6', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 2, tipo: '🔵 Profundo', duracion: 50, text: 'Ejecutar siguiente subtarea', status: 'todo' },
+      { id: 'c1-t1-7', ciclo: 1, parentId: 1, parentTitle: '#1 — Proyecto Jocelyn', frente: 'Cliente', dia: 2, tipo: '🟡 Medio', duracion: 25, text: 'Revisar y ajustar tracker', status: 'todo' },
 
-      // DÍA 2: Jocelyn (#1) - Continuidad
-      { id: "t-6", title: "Releer subtarea + abrir archivo exacto", type: "🟢 Arranque", duration: 5, front: "Jocelyn", day: 2, cycle: 1, status: "TODO" },
-      { id: "t-7", title: "Ejecutar siguiente subtarea", type: "🔵 Profundo", duration: 50, front: "Jocelyn", day: 2, cycle: 1, status: "TODO" },
-      { id: "t-8", title: "Revisar y ajustar tracker", type: "🟡 Medio", duration: 25, front: "Jocelyn", day: 2, cycle: 1, status: "TODO" },
-      { id: "t-9", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Jocelyn", day: 2, cycle: 1, status: "TODO" },
+      // CICLO 1: #2 - Upwork / Perfil Freelance
+      { id: 'c1-t2-1', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 3, tipo: '🟢 Arranque', duracion: 10, text: 'Abrir Upwork + ver checklist de perfil', status: 'todo' },
+      { id: 'c1-t2-2', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 3, tipo: '🔵 Profundo', duracion: 50, text: 'Rellenar título + bio corta', status: 'todo' },
+      { id: 'c1-t2-3', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 3, tipo: '🟡 Medio', duracion: 25, text: 'Definir tarifa y servicios', status: 'todo' },
+      { id: 'c1-t2-4', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 5, tipo: '🟢 Arranque', duracion: 5, text: 'Abrir perfil + revisar qué falta', status: 'todo' },
+      { id: 'c1-t2-5', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 5, tipo: '🔵 Profundo', duracion: 50, text: 'Subir 3 portafolios', status: 'todo' },
+      { id: 'c1-t2-6', ciclo: 1, parentId: 2, parentTitle: '#2 — Upwork / Perfil freelance', frente: 'Freelance', dia: 5, tipo: '🟡 Medio', duracion: 25, text: 'Enviar 1 propuesta de prueba', status: 'todo' },
 
-      // DÍA 3: Upwork (#2)
-      { id: "t-10", title: "Abrir Upwork + ver checklist de perfil", type: "🟢 Arranque", duration: 10, front: "Upwork", day: 3, cycle: 1, status: "TODO" },
-      { id: "t-11", title: "Rellenar título + bio corta", type: "🔵 Profundo", duration: 50, front: "Upwork", day: 3, cycle: 1, status: "TODO" },
-      { id: "t-12", title: "Definir tarifa y servicios", type: "🟡 Medio", duration: 25, front: "Upwork", day: 3, cycle: 1, status: "TODO" },
-      { id: "t-13", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Upwork", day: 3, cycle: 1, status: "TODO" },
+      // CICLO 1: #3 - Proyectos TDD-SDD
+      { id: 'c1-t3-1', ciclo: 1, parentId: 3, parentTitle: '#3 — Proyectos TDD-SDD', frente: 'Desarrollo', dia: 6, tipo: '🟢 Arranque', duracion: 10, text: 'Listar proyectos pendientes y su estado', status: 'todo' },
+      { id: 'c1-t3-2', ciclo: 1, parentId: 3, parentTitle: '#3 — Proyectos TDD-SDD', frente: 'Desarrollo', dia: 6, tipo: '🔵 Profundo', duracion: 50, text: 'Elegir el más pequeño + definir "done" + sesión de código', status: 'todo' },
+      { id: 'c1-t3-3', ciclo: 1, parentId: 3, parentTitle: '#3 — Proyectos TDD-SDD', frente: 'Desarrollo', dia: 6, tipo: '🟡 Medio', duracion: 25, text: 'Cerrar y documentar avance', status: 'todo' },
 
-      // DÍA 4: BUFFER 1
-      { id: "t-14", title: "Recuperar atrasos D1-3 (o tarea ligera de buffer)", type: "🔄 Buffer", duration: 60, front: "Mantenimiento", day: 4, cycle: 1, status: "BUFFER" },
-      { id: "t-15", title: "Descanso / Pausa sin pantalla", type: "🧘 Cierre", duration: 15, front: "Personal", day: 4, cycle: 1, status: "TODO" },
+      // CICLO 1: #4 - Documentación (Specs y Postmortems)
+      { id: 'c1-t4-1', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 7, tipo: '🟢 Arranque', duracion: 10, text: 'Crear plantilla de Spec', status: 'todo' },
+      { id: 'c1-t4-2', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 7, tipo: '🔵 Profundo', duracion: 50, text: 'Rellenar 1 Spec del proyecto más reciente', status: 'todo' },
+      { id: 'c1-t4-3', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 7, tipo: '🟡 Medio', duracion: 25, text: 'Crear plantilla de Postmortem', status: 'todo' },
+      { id: 'c1-t4-4', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 9, tipo: '🟢 Arranque', duracion: 5, text: 'Abrir plantilla de Postmortem', status: 'todo' },
+      { id: 'c1-t4-5', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 9, tipo: '🔵 Profundo', duracion: 50, text: 'Rellenar 1 Postmortem', status: 'todo' },
+      { id: 'c1-t4-6', ciclo: 1, parentId: 4, parentTitle: '#4 — Documentación: Specs y Postmortems', frente: 'Desarrollo', dia: 9, tipo: '🟡 Medio', duracion: 25, text: 'Revisar que Specs y Postmortems estén enlazados', status: 'todo' },
 
-      // DÍA 5: Upwork (#2) - Continuidad
-      { id: "t-16", title: "Abrir perfil + revisar qué falta", type: "🟢 Arranque", duration: 5, front: "Upwork", day: 5, cycle: 1, status: "TODO" },
-      { id: "t-17", title: "Subir 3 portafolios", type: "🔵 Profundo", duration: 50, front: "Upwork", day: 5, cycle: 1, status: "TODO" },
-      { id: "t-18", title: "Enviar 1 propuesta de prueba", type: "🟡 Medio", duration: 25, front: "Upwork", day: 5, cycle: 1, status: "TODO" },
-      { id: "t-19", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Upwork", day: 5, cycle: 1, status: "TODO" },
+      // CICLO 1: #5 - Página Web IWM
+      { id: 'c1-t5-1', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 10, tipo: '🟢 Arranque', duracion: 10, text: 'Abrir web IWM + listar secciones que faltan', status: 'todo' },
+      { id: 'c1-t5-2', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 10, tipo: '🔵 Profundo', duracion: 50, text: 'Elegir 1 sección + contenido mínimo viable + maquetar', status: 'todo' },
+      { id: 'c1-t5-3', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 10, tipo: '🟡 Medio', duracion: 25, text: 'Revisar y publicar borrador', status: 'todo' },
+      { id: 'c1-t5-4', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 11, tipo: '🟢 Arranque', duracion: 5, text: 'Abrir sección siguiente', status: 'todo' },
+      { id: 'c1-t5-5', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 11, tipo: '🔵 Profundo', duracion: 50, text: 'Maquetar siguiente sección', status: 'todo' },
+      { id: 'c1-t5-6', ciclo: 1, parentId: 5, parentTitle: '#5 — Página web IWM', frente: 'IWM', dia: 11, tipo: '🟡 Medio', duracion: 25, text: 'Verificar enlaces y responsive', status: 'todo' },
 
-      // DÍA 6: TDD-SDD (#3)
-      { id: "t-20", title: "Listar proyectos pendientes y su estado", type: "🟢 Arranque", duration: 10, front: "TDD-SDD", day: 6, cycle: 1, status: "TODO" },
-      { id: "t-21", title: "Elegir el más pequeño + definir 'done' + sesión de código", type: "🔵 Profundo", duration: 50, front: "TDD-SDD", day: 6, cycle: 1, status: "TODO" },
-      { id: "t-22", title: "Cerrar y documentar avance", type: "🟡 Medio", duration: 25, front: "TDD-SDD", day: 6, cycle: 1, status: "TODO" },
-      { id: "t-23", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "TDD-SDD", day: 6, cycle: 1, status: "TODO" },
+      // CICLO 1: #6 - Portafolio MauroMiranda + su blog
+      { id: 'c1-t6-1', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 13, tipo: '🟢 Arranque', duracion: 10, text: 'Decidir estructura del blog del portafolio: 3 categorías máx.', status: 'todo' },
+      { id: 'c1-t6-2', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 13, tipo: '🔵 Profundo', duracion: 50, text: 'Escribir título + 3 bullets del primer post del portafolio', status: 'todo' },
+      { id: 'c1-t6-3', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 13, tipo: '🟡 Medio', duracion: 25, text: 'Redactar post 1 del portafolio en borrador', status: 'todo' },
+      { id: 'c1-t6-4', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 14, tipo: '🟢 Arranque', duracion: 5, text: 'Abrir borrador del post del portafolio', status: 'todo' },
+      { id: 'c1-t6-5', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 14, tipo: '🔵 Profundo', duracion: 50, text: 'Conectar blog al portafolio MauroMiranda', status: 'todo' },
+      { id: 'c1-t6-6', ciclo: 1, parentId: 6, parentTitle: '#6 — Portafolio MauroMiranda + su blog', frente: 'MauroMiranda', dia: 14, tipo: '🟡 Medio', duracion: 25, text: 'Revisar navegación y publicar', status: 'todo' },
 
-      // DÍA 7: Documentación (#4)
-      { id: "t-24", title: "Crear plantilla de Spec", type: "🟢 Arranque", duration: 10, front: "Documentación", day: 7, cycle: 1, status: "TODO" },
-      { id: "t-25", title: "Rellenar 1 Spec del proyecto más reciente", type: "🔵 Profundo", duration: 50, front: "Documentación", day: 7, cycle: 1, status: "TODO" },
-      { id: "t-26", title: "Crear plantilla de Postmortem", type: "🟡 Medio", duration: 25, front: "Documentación", day: 7, cycle: 1, status: "TODO" },
-      { id: "t-27", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Documentación", day: 7, cycle: 1, status: "TODO" },
+      // CICLO 1: #9 - Mirada sin Filtros (Arranque Fase 1)
+      { id: 'c1-t9-1', ciclo: 1, parentId: 9, parentTitle: '✅ #9 — Página FB "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 13, tipo: '🟡 Medio', duracion: 25, text: 'Crear página FB "Mirada sin Filtros": nombre, bio, categoría, foto', status: 'todo' },
+      { id: 'c1-t9-2', ciclo: 1, parentId: 9, parentTitle: '✅ #9 — Página FB "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 14, tipo: '🟡 Medio', duracion: 25, text: 'Publicar primer post de presentación', status: 'todo' },
+      { id: 'c1-t9-3', ciclo: 1, parentId: 9, parentTitle: '✅ #9 — Página FB "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 15, tipo: '⚪ Ligero', duracion: 10, text: 'Verificar que la página quedó completa (checklist)', status: 'todo' },
 
-      // DÍA 8: BUFFER 2
-      { id: "t-28", title: "Recuperar atrasos D5-7 (o tarea ligera de buffer)", type: "🔄 Buffer", duration: 60, front: "Mantenimiento", day: 8, cycle: 1, status: "BUFFER" },
-      { id: "t-29", title: "Descanso / Pausa sin pantalla", type: "🧘 Cierre", duration: 15, front: "Personal", day: 8, cycle: 1, status: "TODO" },
+      // CICLO 1: Cierre de Ciclo Día 15
+      { id: 'c1-t15-1', ciclo: 1, parentId: 15, parentTitle: '✅ Cierre de ciclo (Día 15)', frente: 'Mantenimiento', dia: 15, tipo: '🟢 Arranque', duracion: 10, text: 'Revisar tablero: qué quedó hecho', status: 'todo' },
+      { id: 'c1-t15-2', ciclo: 1, parentId: 15, parentTitle: '✅ Cierre de ciclo (Día 15)', frente: 'Mantenimiento', dia: 15, tipo: '🟡 Medio', duracion: 25, text: 'Actualizar tracker + repasar pendientes abiertos', status: 'todo' },
+      { id: 'c1-t15-3', ciclo: 1, parentId: 15, parentTitle: '✅ Cierre de ciclo (Día 15)', frente: 'Mantenimiento', dia: 15, tipo: '🟡 Medio', duracion: 25, text: 'Planificar Ciclo 2 + anotar primera tarea del Día 1', status: 'todo' },
 
-      // DÍA 9: Documentación (#4) - Continuidad
-      { id: "t-30", title: "Abrir plantilla de Postmortem", type: "🟢 Arranque", duration: 5, front: "Documentación", day: 9, cycle: 1, status: "TODO" },
-      { id: "t-31", title: "Rellenar 1 Postmortem", type: "🔵 Profundo", duration: 50, front: "Documentación", day: 9, cycle: 1, status: "TODO" },
-      { id: "t-32", title: "Revisar que Specs y Postmortems estén enlazados", type: "🟡 Medio", duration: 25, front: "Documentación", day: 9, cycle: 1, status: "TODO" },
-      { id: "t-33", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Documentación", day: 9, cycle: 1, status: "TODO" },
+      // CICLO 2: Precargadas
+      { id: 'c2-t7-1', ciclo: 2, parentId: 7, parentTitle: '✅ #7 — Configurar Instagram IWM', frente: 'IWM', dia: 1, tipo: '🟢 Arranque', duracion: 10, text: 'Abrir IG empresarial IWM y verificar datos de perfil', status: 'todo' },
+      { id: 'c2-t7-2', ciclo: 2, parentId: 7, parentTitle: '✅ #7 — Configurar Instagram IWM', frente: 'IWM', dia: 1, tipo: '🔵 Profundo', duracion: 50, text: 'Configurar espejo de contenido con FB IWM', status: 'todo' },
+      { id: 'c2-t8-1', ciclo: 2, parentId: 8, parentTitle: '✅ #8 — FB Personal Mauricio Vergara', frente: 'Personal', dia: 3, tipo: '🟡 Medio', duracion: 25, text: 'Definir enfoque de página FB personal (blog personal)', status: 'todo' },
+      { id: 'c2-t10-1', ciclo: 2, parentId: 10, parentTitle: '✅ #10 — Blog de "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 5, tipo: '🔵 Profundo', duracion: 50, text: 'Estructurar blog de Mirada sin Filtros (independiente de MauroMiranda)', status: 'todo' },
+      { id: 'c2-t12-1', ciclo: 2, parentId: 12, parentTitle: '✅ #12 — Ordenar Chats de IAs', frente: 'Mantenimiento', dia: 7, tipo: '🟡 Medio', duracion: 25, text: 'Ordenar y depurar prompts/chats en todos los dispositivos', status: 'todo' },
 
-      // DÍA 10: IWM Web (#5)
-      { id: "t-34", title: "Abrir web IWM + listar secciones que faltan", type: "🟢 Arranque", duration: 10, front: "IWM", day: 10, cycle: 1, status: "TODO" },
-      { id: "t-35", title: "Elegir 1 sección + contenido mínimo viable + maquetar", type: "🔵 Profundo", duration: 50, front: "IWM", day: 10, cycle: 1, status: "TODO" },
-      { id: "t-36", title: "Revisar y publicar borrador", type: "🟡 Medio", duration: 25, front: "IWM", day: 10, cycle: 1, status: "TODO" },
-      { id: "t-37", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "IWM", day: 10, cycle: 1, status: "TODO" },
-
-      // DÍA 11: IWM Web (#5) - Continuidad
-      { id: "t-38", title: "Abrir sección siguiente", type: "🟢 Arranque", duration: 5, front: "IWM", day: 11, cycle: 1, status: "TODO" },
-      { id: "t-39", title: "Maquetar siguiente sección", type: "🔵 Profundo", duration: 50, front: "IWM", day: 11, cycle: 1, status: "TODO" },
-      { id: "t-40", title: "Verificar enlaces y responsive", type: "🟡 Medio", duration: 25, front: "IWM", day: 11, cycle: 1, status: "TODO" },
-      { id: "t-41", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "IWM", day: 11, cycle: 1, status: "TODO" },
-
-      // DÍA 12: BUFFER 3
-      { id: "t-42", title: "Recuperar atrasos D9-11 (o tarea ligera de buffer)", type: "🔄 Buffer", duration: 60, front: "Mantenimiento", day: 12, cycle: 1, status: "BUFFER" },
-      { id: "t-43", title: "Descanso / Pausa sin pantalla", type: "🧘 Cierre", duration: 15, front: "Personal", day: 12, cycle: 1, status: "TODO" },
-
-      // DÍA 13: Portafolio MauroMiranda + Arranque "Mirada sin Filtros" (#6 y #9)
-      { id: "t-44", title: "Decidir estructura del blog del portafolio: 3 categorías máx", type: "🟢 Arranque", duration: 10, front: "MauroMiranda", day: 13, cycle: 1, status: "TODO" },
-      { id: "t-45", title: "Escribir título + 3 bullets del primer post del portafolio", type: "🔵 Profundo", duration: 50, front: "MauroMiranda", day: 13, cycle: 1, status: "TODO" },
-      { id: "t-46", title: "Crear página FB 'Mirada sin Filtros': nombre, bio, categoría, foto", type: "🟡 Medio", duration: 25, front: "Mirada sin Filtros", day: 13, cycle: 1, status: "TODO" },
-      { id: "t-47", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Personal", day: 13, cycle: 1, status: "TODO" },
-
-      // DÍA 14: Portafolio (#6) Continuidad + 1er post "Mirada sin Filtros" (#9)
-      { id: "t-48", title: "Abrir borrador del post del portafolio", type: "🟢 Arranque", duration: 5, front: "MauroMiranda", day: 14, cycle: 1, status: "TODO" },
-      { id: "t-49", title: "Conectar blog al portafolio MauroMiranda", type: "🔵 Profundo", duration: 50, front: "MauroMiranda", day: 14, cycle: 1, status: "TODO" },
-      { id: "t-50", title: "Publicar primer post de presentación en 'Mirada sin Filtros'", type: "🟡 Medio", duration: 25, front: "Mirada sin Filtros", day: 14, cycle: 1, status: "TODO" },
-      { id: "t-51", title: "Cierre ritual diario (5 min)", type: "🧘 Cierre", duration: 5, front: "Personal", day: 14, cycle: 1, status: "TODO" },
-
-      // DÍA 15: BUFFER + CIERRE DE CICLO
-      { id: "t-52", title: "Recuperar atrasos D13-14", type: "🔄 Buffer", duration: 60, front: "Mantenimiento", day: 15, cycle: 1, status: "BUFFER" },
-      { id: "t-53", title: "Revisar tablero: qué quedó hecho + actualizar tracker", type: "🟡 Medio", duration: 25, front: "Mantenimiento", day: 15, cycle: 1, status: "TODO" },
-      { id: "t-54", title: "Planificar Ciclo 2 (IG IWM, FB Mauricio, Blog Mirada sin Filtros, Chats)", type: "🟡 Medio", duration: 25, front: "Personal", day: 15, cycle: 1, status: "TODO" },
-      { id: "t-55", title: "Anotar primera microtarea minúscula del Día 1 del Ciclo 2", type: "🟢 Arranque", duration: 10, front: "Personal", day: 15, cycle: 1, status: "TODO" },
-
-      // TAREAS PLANIFICADAS PARA CICLO 2
-      { id: "c2-1", title: "Configurar Instagram de IWM igual que FB IWM", type: "🔵 Profundo", duration: 50, front: "IWM", day: 1, cycle: 2, status: "TODO" },
-      { id: "c2-2", title: "Definir página FB personal de Mauricio Vergara (blog personal)", type: "🔵 Profundo", duration: 50, front: "Personal", day: 3, cycle: 2, status: "TODO" },
-      { id: "c2-3", title: "Crear Blog de 'Mirada sin Filtros' (independiente del de MauroMiranda)", type: "🔵 Profundo", duration: 50, front: "Mirada sin Filtros", day: 6, cycle: 2, status: "TODO" },
-      { id: "c2-4", title: "Ordenar chats de IAs en todos los dispositivos", type: "⚪ Ligero", duration: 15, front: "Mantenimiento", day: 9, cycle: 2, status: "TODO" },
-
-      // TAREAS PLANIFICADAS PARA CICLO 3
-      { id: "c3-1", title: "Estructura y primeros capítulos del Libro 'Mirada sin Filtros'", type: "🔵 Profundo", duration: 50, front: "Mirada sin Filtros", day: 1, cycle: 3, status: "TODO" }
+      // CICLO 3: Precargadas
+      { id: 'c3-t11-1', ciclo: 3, parentId: 11, parentTitle: '✅ #11 — Libro de "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 1, tipo: '🟢 Arranque', duracion: 10, text: 'Crear índice temático del libro Mirada sin Filtros', status: 'todo' },
+      { id: 'c3-t11-2', ciclo: 3, parentId: 11, parentTitle: '✅ #11 — Libro de "Mirada sin Filtros"', frente: 'Mirada sin Filtros', dia: 2, tipo: '🔵 Profundo', duracion: 50, text: 'Escribir primer capítulo introductorio', status: 'todo' },
     ];
 
-    const BUFFER_LIGHT_SUGGESTIONS = {
+    const DAYS_INFO = {
+      1: { title: 'Jocelyn (#1)', type: 'normal', desc: 'Arranque del proyecto de cliente' },
+      2: { title: 'Jocelyn (#1) — Continuidad', type: 'normal', desc: 'Mismo proyecto consecutivo para mantener el contexto' },
+      3: { title: 'Upwork (#2)', type: 'normal', desc: 'Perfil freelance y servicios' },
+      4: { title: '🔄 BUFFER 1', type: 'buffer', desc: 'Recuperar atrasos D1-3 · Si no hay: mantenimiento ligero' },
+      5: { title: 'Upwork (#2) — Continuidad', type: 'normal', desc: 'Subida de portafolio y propuesta' },
+      6: { title: 'TDD-SDD (#3)', type: 'normal', desc: 'Proyectos de código y definición de Done' },
+      7: { title: 'Documentación (#4)', type: 'normal', desc: 'Plantilla de Specs y 1er Spec' },
+      8: { title: '🔄 BUFFER 2', type: 'buffer', desc: 'Recuperar atrasos D5-7 · Si no hay: mantenimiento ligero' },
+      9: { title: 'Documentación (#4) — Continuidad', type: 'normal', desc: 'Plantilla de Postmortem y enlace' },
+      10: { title: 'IWM — Página Web (#5)', type: 'normal', desc: 'Listado y maquetación de secciones' },
+      11: { title: 'IWM — Página Web (#5) — Continuidad', type: 'normal', desc: 'Responsive y verificación de enlaces' },
+      12: { title: '🔄 BUFFER 3', type: 'buffer', desc: 'Recuperar atrasos D9-11 · Si no hay: mantenimiento ligero' },
+      13: { title: 'Portafolio MauroMiranda (#6) + FB Mirada sin Filtros (#9)', type: 'normal', desc: 'Blog portafolio y creación de página FB' },
+      14: { title: 'Portafolio (#6) + Primer Post Mirada sin Filtros (#9)', type: 'normal', desc: 'Conectar blog y post inaugural de presentación' },
+      15: { title: '🔄 BUFFER + CIERRE DE CICLO', type: 'buffer-close', desc: 'Recuperar atrasos D13-14 + Cierre de Ciclo + Planificar Ciclo 2' },
+    };
+
+    const BUFFER_OPTIONS = {
       4: [
-        { label: "Opción A (Orden)", text: "Actualizar tracker visible (Jocelyn + Upwork) + revisar parking lot", recommended: true },
-        { label: "Opción B (Prep)", text: "Crear carpeta/nota vacía del Día 6 (TDD-SDD) — solo el espacio", recommended: false },
-        { label: "Opción C (Bajo costo)", text: "Pausa sin pantalla 10 min + archivar notificaciones sin acción", recommended: false }
+        { label: 'A (Orden)', text: 'Actualizar tracker visible (Jocelyn + Upwork) + revisar parking lot', dur: 15, rec: true },
+        { label: 'B (Preparación)', text: 'Crear carpeta/nota vacía del Día 6 (TDD-SDD) — solo el espacio', dur: 10 },
+        { label: 'C (Bajo costo)', text: 'Pausa sin pantalla 10 min + archivar notificaciones sin acción', dur: 10 }
       ],
       8: [
-        { label: "Opción A (Orden)", text: "Actualizar tracker + verificar plantilla de Spec guardada", recommended: true },
-        { label: "Opción B (Prep)", text: "Abrir plantilla de Postmortem vacía del D9 y dejarla lista", recommended: true },
-        { label: "Opción C (Bajo costo)", text: "Cerrar pestañas temporales de TDD-SDD + pausa 10 min", recommended: false }
+        { label: 'A (Orden)', text: 'Actualizar tracker + verificar plantilla de Spec en carpeta correcta', dur: 15, rec: true },
+        { label: 'B (Preparación)', text: 'Abrir plantilla de Postmortem vacía del Día 9 y dejarla lista', dur: 10 },
+        { label: 'C (Bajo costo)', text: 'Cerrar pestañas temporales de TDD-SDD + pausa sensorial 10 min', dur: 10 }
       ],
       12: [
-        { label: "Opción A (Orden)", text: "Revisar que Specs y Postmortems estén enlazados + tracker IWM", recommended: true },
-        { label: "Opción B (Prep)", text: "Crear nota con 3 categorías del blog del portafolio para D13", recommended: false },
-        { label: "Opción C (Bajo costo)", text: "Verificar enlaces rotos de IWM web + pausa 10 min", recommended: false }
+        { label: 'A (Orden)', text: 'Revisar enlaces de Specs y Postmortems + actualizar tracker IWM', dur: 15, rec: true },
+        { label: 'B (Preparación)', text: 'Crear nota con 3 categorías del blog de portafolio para Día 13', dur: 10 },
+        { label: 'C (Bajo costo)', text: 'Verificar enlaces rotos de IWM web + pausa 10 min', dur: 10 }
       ],
       15: [
-        { label: "Opción A (Orden)", text: "Actualizar tracker completo + revisar parking lot acumulado", recommended: true },
-        { label: "Opción B (Prep)", text: "Dejar lista nota Ciclo 2 (IG IWM, FB Mauricio, Blog MsF, Chats)", recommended: false },
-        { label: "Opción C (Bajo costo)", text: "Verificar que la página 'Mirada sin Filtros' quedó completa + pausa", recommended: false }
+        { label: 'A (Orden)', text: 'Actualizar tracker completo + revisar parking lot acumulado', dur: 15, rec: true },
+        { label: 'B (Preparación)', text: 'Dejar lista nota de Ciclo 2 (IG IWM, FB Mauricio, blog Mirada, chats)', dur: 15 },
+        { label: 'C (Bajo costo)', text: 'Verificar checklist completo de Mirada sin Filtros + pausa', dur: 15 }
       ]
     };
 
-    const DAY_INFO_MAP = {
-      1: { title: "Jocelyn (#1)", desc: "🟢 Abrir y listar · 🔵 Subtarea concreta · 🟡 Documentar tracker", isBuffer: false },
-      2: { title: "Jocelyn (#1) — Continuidad", desc: "🟢 Releer subtarea · 🔵 Ejecutar siguiente subtarea · 🟡 Ajustar tracker", isBuffer: false },
-      3: { title: "Upwork (#2) — Monetizar", desc: "🟢 Checklist Upwork · 🔵 Título y Bio · 🟡 Tarifas y servicios", isBuffer: false },
-      4: { title: "🔄 BUFFER 1", desc: "Recuperar atrasos D1-D3. Si estás al día: tarea ligera o descanso total.", isBuffer: true },
-      5: { title: "Upwork (#2) — Continuidad", desc: "🟢 Revisar perfil · 🔵 Subir 3 portafolios · 🟡 1 propuesta de prueba", isBuffer: false },
-      6: { title: "TDD-SDD (#3) — Proyectos", desc: "🟢 Listar pendientes · 🔵 Elegir el más pequeño y codificar · 🟡 Documentar", isBuffer: false },
-      7: { title: "Documentación (#4) — Specs", desc: "🟢 Plantilla Spec · 🔵 Rellenar 1 Spec reciente · 🟡 Plantilla Postmortem", isBuffer: false },
-      8: { title: "🔄 BUFFER 2", desc: "Recuperar atrasos D5-D7. Si estás al día: mantenimiento ligero o descanso.", isBuffer: true },
-      9: { title: "Documentación (#4) — Continuidad", desc: "🟢 Abrir postmortem · 🔵 Rellenar 1 Postmortem · 🟡 Enlazar Docs", isBuffer: false },
-      10: { title: "IWM Web (#5)", desc: "🟢 Secciones faltantes · 🔵 Maquetar sección clave · 🟡 Publicar borrador", isBuffer: false },
-      11: { title: "IWM Web (#5) — Continuidad", desc: "🟢 Siguiente sección · 🔵 Maquetar · 🟡 Enlaces y responsive", isBuffer: false },
-      12: { title: "🔄 BUFFER 3", desc: "Recuperar atrasos D9-D11. Buffer no produce, mantiene.", isBuffer: true },
-      13: { title: "Portafolio MauroMiranda + Arranque Mirada sin Filtros", desc: "🟢 3 categorías blog · 🔵 Redactar post portafolio · 🟡 Crear fanpage FB Mirada sin Filtros", isBuffer: false },
-      14: { title: "Portafolio (#6) + Primer Post Mirada sin Filtros (#9)", desc: "🟢 Borrador post · 🔵 Conectar blog al portafolio · 🟡 Publicar bienvenida en FB Mirada sin Filtros", isBuffer: false },
-      15: { title: "🔄 BUFFER 4 + CIERRE DE CICLO 1", desc: "Recuperar atrasos D13-14 + Revisión del tablero + Planificar Ciclo 2", isBuffer: true, isCycleClose: true }
+    // ----------------------------------------------------
+    // ESTADO REACTIVO
+    // ----------------------------------------------------
+    let state = {
+      currentDay: 1,
+      filterCycle: 1,
+      activeView: 'today',
+      tasks: [],
+      timer: {
+        totalSeconds: 25 * 60,
+        remainingSeconds: 25 * 60,
+        isRunning: false,
+        activeTaskTitle: 'Enfoque Inicial',
+        intervalId: null
+      }
     };
 
-    /* ================= ESTADO DE LA APLICACIÓN ================= */
-    let tasks = [];
-    let currentDay = 1;
-    let currentCycle = 1;
-    let masterFilterCycle = 1;
-
-    // Timer state
-    let timerDuration = 25 * 60; // 25 min default
-    let timerRemaining = 25 * 60;
-    let timerInterval = null;
-    let timerRunning = false;
-    let timerLabel = "🟡 Pomodoro";
-
-    /* ================= INICIALIZACIÓN ================= */
-    window.onload = function() {
-      loadState();
-      updateUI();
+    // ----------------------------------------------------
+    // INICIALIZACIÓN
+    // ----------------------------------------------------
+    function initApp() {
+      loadStateFromStorage();
+      setupDaySelect();
+      renderAllViews();
       lucide.createIcons();
-    };
+    }
 
-    function loadState() {
-      const savedTasks = localStorage.getItem("tea_tasks_v1");
-      const savedDay = localStorage.getItem("tea_day_v1");
-      const savedCycle = localStorage.getItem("tea_cycle_v1");
-
+    function loadStateFromStorage() {
+      const savedTasks = localStorage.getItem('ciclo15_tasks');
       if (savedTasks) {
-        try { tasks = JSON.parse(savedTasks); } catch(e) { tasks = [...INITIAL_TASKS]; }
+        try {
+          state.tasks = JSON.parse(savedTasks);
+        } catch (e) {
+          state.tasks = [...INITIAL_TASKS];
+        }
       } else {
-        tasks = [...INITIAL_TASKS];
+        state.tasks = [...INITIAL_TASKS];
       }
 
-      currentDay = savedDay ? parseInt(savedDay) : 1;
-      currentCycle = savedCycle ? parseInt(savedCycle) : 1;
+      const savedDay = localStorage.getItem('ciclo15_day');
+      if (savedDay) {
+        state.currentDay = parseInt(savedDay) || 1;
+      }
     }
 
-    function saveState() {
-      localStorage.setItem("tea_tasks_v1", JSON.stringify(tasks));
-      localStorage.setItem("tea_day_v1", currentDay);
-      localStorage.setItem("tea_cycle_v1", currentCycle);
+    function saveTasksToStorage() {
+      localStorage.setItem('ciclo15_tasks', JSON.stringify(state.tasks));
     }
 
-    /* ================= GESTIÓN DE DÍAS Y VISTAS ================= */
-    function changeDay(delta) {
-      currentDay = Math.min(Math.max(1, currentDay + delta), 15);
-      saveState();
-      updateUI();
+    function saveDayToStorage() {
+      localStorage.setItem('ciclo15_day', state.currentDay);
     }
 
-    function selectDay(day) {
-      currentDay = day;
-      saveState();
-      switchView('focus');
-      updateUI();
-    }
-
-    function switchView(viewId) {
-      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+    // ----------------------------------------------------
+    // GESTIÓN DE VISTAS (100% RESPONSIVE Y FIABLE EN MÓVIL)
+    // ----------------------------------------------------
+    function switchView(viewName) {
+      state.activeView = viewName;
+      const views = ['today', 'cycle', 'kanban', 'tasks', 'ritual', 'rules'];
       
-      // Desktop nav classes
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-indigo-50', 'text-indigo-700');
-        btn.classList.add('text-slate-600');
-      });
-
-      // Mobile bottom nav active classes
-      const mobileNavButtons = ['focus', 'calendar', 'kanban', 'tasks', 'ritual', 'assets'];
-      mobileNavButtons.forEach(id => {
-        const mBtn = document.getElementById(`m-nav-${id}`);
-        if (mBtn) {
-          if (id === viewId) {
-            mBtn.classList.remove('text-slate-500');
-            mBtn.classList.add('text-indigo-600');
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) {
+          if (v === viewName) {
+            el.classList.remove('hidden');
           } else {
-            mBtn.classList.remove('text-indigo-600');
-            mBtn.classList.add('text-slate-500');
+            el.classList.add('hidden');
           }
         }
       });
 
-      const activeView = document.getElementById(`view-${viewId}`);
-      const activeNav = document.getElementById(`nav-${viewId}`);
-      if (activeView) activeView.classList.remove('hidden');
-      if (activeNav) {
-        activeNav.classList.add('bg-indigo-50', 'text-indigo-700');
-        activeNav.classList.remove('text-slate-600');
-      }
+      // Actualizar botones de navegación desktop
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const target = btn.getAttribute('data-nav');
+        if (target === viewName) {
+          btn.className = 'nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-indigo-600 text-white flex items-center gap-1.5 shadow-sm';
+        } else {
+          btn.className = 'nav-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1.5';
+        }
+      });
 
-      // Re-renders específicos
-      if (viewId === 'kanban') renderKanban();
-      if (viewId === 'calendar') renderCalendar();
-      if (viewId === 'tasks') renderMasterTasks();
-      if (viewId === 'focus') renderFocusView();
-      if (viewId === 'ritual') renderRitualView();
+      // Actualizar botones de navegación móvil inferior
+      views.forEach(v => {
+        const mobBtn = document.getElementById(`mob-nav-${v}`);
+        if (mobBtn) {
+          if (v === viewName) {
+            mobBtn.className = 'flex-1 py-1.5 flex flex-col items-center gap-0.5 text-indigo-400 font-bold';
+          } else {
+            mobBtn.className = 'flex-1 py-1.5 flex flex-col items-center gap-0.5 text-slate-400 font-semibold';
+          }
+        }
+      });
 
-      lucide.createIcons();
+      // Refresco de render si es necesario
+      if (viewName === 'kanban') renderKanban();
+      if (viewName === 'tasks') renderMasterTasks();
+      if (viewName === 'today') renderTodayView();
+      if (viewName === 'cycle') renderCycleGrid();
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function updateUI() {
-      // Topbar labels
-      document.getElementById('current-day-label').innerText = `Día ${currentDay} de 15`;
-      document.getElementById('cycle-badge').innerText = `Ciclo ${currentCycle}`;
-
-      const dayInfo = DAY_INFO_MAP[currentDay] || { title: `Día ${currentDay}`, desc: "", isBuffer: false };
-      const pill = document.getElementById('day-type-pill');
-      
-      if (currentDay === 15) {
-        pill.className = "text-xs px-2.5 py-1 rounded-full font-bold border hidden lg:inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 border-amber-300";
-        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Buffer + Cierre Ciclo`;
-      } else if (dayInfo.isBuffer) {
-        pill.className = "text-xs px-2.5 py-1 rounded-full font-bold border hidden lg:inline-flex items-center gap-1.5 bg-purple-100 text-purple-800 border-purple-300";
-        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-500"></span> Día Buffer`;
-      } else {
-        pill.className = "text-xs px-2.5 py-1 rounded-full font-bold border hidden lg:inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border-blue-200";
-        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500"></span> Día de Ejecución`;
-      }
-
-      renderFocusView();
-      renderKanban();
-      renderCalendar();
-      renderMasterTasks();
-      renderRitualView();
       lucide.createIcons();
     }
 
-    /* ================= VISTA 1: FOCO / HOY ================= */
-    function renderFocusView() {
-      const dayInfo = DAY_INFO_MAP[currentDay] || { title: `Día ${currentDay}`, desc: "", isBuffer: false };
-      
-      document.getElementById('focus-day-tag').innerText = `Día ${currentDay}`;
-      document.getElementById('focus-day-title').innerText = dayInfo.title;
-      document.getElementById('focus-day-desc').innerText = dayInfo.desc;
-
-      // Tag de continuidad
-      const contTag = document.getElementById('focus-continuity-tag');
-      if (dayInfo.title.includes("Continuidad")) {
-        contTag.innerText = "⚡ Continuidad de contexto activa";
-        contTag.className = "text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded";
-      } else if (dayInfo.isBuffer) {
-        contTag.innerText = "🛡️ Día de colchón (Sin culpa)";
-        contTag.className = "text-xs text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded";
-      } else {
-        contTag.innerText = "🎯 Enfoque prioritario";
-        contTag.className = "text-xs text-slate-500 font-medium";
+    // ----------------------------------------------------
+    // CONTROL DEL DÍA ACTUAL
+    // ----------------------------------------------------
+    function setupDaySelect() {
+      const select = document.getElementById('select-day');
+      select.innerHTML = '';
+      for (let i = 1; i <= 15; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        const dInfo = DAYS_INFO[i];
+        opt.textContent = `Día ${i}: ${dInfo.type === 'buffer' || dInfo.type === 'buffer-close' ? '🔄 Buffer' : dInfo.title.substring(0, 20)}`;
+        select.appendChild(opt);
       }
+      select.value = state.currentDay;
+    }
 
-      // Buffer notice
-      const bufferBox = document.getElementById('buffer-special-box');
-      if (dayInfo.isBuffer) {
-        bufferBox.classList.remove('hidden');
-        renderBufferLightOptions(currentDay);
+    function setCurrentDay(dayNum) {
+      if (dayNum < 1) dayNum = 1;
+      if (dayNum > 15) dayNum = 15;
+      state.currentDay = dayNum;
+      document.getElementById('select-day').value = dayNum;
+      saveDayToStorage();
+      renderTodayView();
+      lucide.createIcons();
+    }
+
+    function changeCurrentDay(delta) {
+      setCurrentDay(state.currentDay + delta);
+    }
+
+    // ----------------------------------------------------
+    // VISTA 1: HOY (RENDER)
+    // ----------------------------------------------------
+    function renderTodayView() {
+      const day = state.currentDay;
+      const dInfo = DAYS_INFO[day];
+
+      const titleEl = document.getElementById('today-title');
+      const badgeEl = document.getElementById('today-badge-type');
+      const bufferSection = document.getElementById('today-buffer-section');
+
+      titleEl.textContent = `Día ${day}: ${dInfo.title}`;
+
+      if (dInfo.type === 'buffer') {
+        badgeEl.textContent = 'Día Buffer (Recuperación y Mantenimiento)';
+        badgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-purple-950 text-purple-300 border border-purple-800';
+        bufferSection.classList.remove('hidden');
+        renderBufferCards(day);
+      } else if (dInfo.type === 'buffer-close') {
+        badgeEl.textContent = 'Día 15: Buffer + Cierre de Ciclo';
+        badgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-purple-900 text-purple-200 border border-purple-700';
+        bufferSection.classList.remove('hidden');
+        renderBufferCards(day);
       } else {
-        bufferBox.classList.add('hidden');
+        badgeEl.textContent = 'Día de Ejecución Ordinaria';
+        badgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-300';
+        bufferSection.classList.add('hidden');
       }
 
       // Tareas del día
-      const todayTasks = tasks.filter(t => t.cycle === currentCycle && t.day === currentDay);
+      const todayTasks = state.tasks.filter(t => t.ciclo === 1 && t.dia === day);
       const container = document.getElementById('today-tasks-container');
-      container.innerHTML = "";
+      const countEl = document.getElementById('today-tasks-count');
+
+      const completed = todayTasks.filter(t => t.status === 'done').length;
+      countEl.textContent = `${completed}/${todayTasks.length}`;
+
+      container.innerHTML = '';
 
       if (todayTasks.length === 0) {
         container.innerHTML = `
-          <div class="bg-white rounded-xl p-6 sm:p-8 border border-dashed border-slate-300 text-center text-slate-500">
-            <i data-lucide="sparkles" class="w-8 h-8 text-indigo-400 mx-auto mb-2"></i>
-            <p class="font-medium text-xs sm:text-sm">No hay tareas programadas para este día.</p>
-            <button onclick="openAddTaskModal(${currentDay})" class="touch-target-min mt-3 text-xs px-3 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition active:scale-95">
-              + Agregar una tarea ligera
+          <div class="text-center py-8 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+            <p class="text-xs text-slate-400">No hay tareas programadas directamente para hoy.</p>
+            <p class="text-[11px] text-slate-500 mt-1">Usa la vista de Tareas para añadir microbloques o revisa el buffer.</p>
+          </div>
+        `;
+        return;
+      }
+
+      todayTasks.forEach(task => {
+        const card = document.createElement('div');
+        const isDone = task.status === 'done';
+        const isBuffer = task.status === 'buffer';
+
+        card.className = `p-3.5 rounded-2xl border transition-all flex items-start justify-between gap-3 ${
+          isDone ? 'bg-slate-900/40 border-slate-800/60 opacity-60' : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3 min-w-0">
+            <button onclick="toggleTaskStatus('${task.id}')" class="mt-0.5 touch-target-min flex items-center justify-center shrink-0">
+              <div class="w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                isDone ? 'bg-emerald-600 border-emerald-500 text-white' : 'border-slate-600 bg-slate-800 text-transparent'
+              }">
+                <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
+              </div>
+            </button>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${getTypeBadgeClass(task.tipo)}">${task.tipo}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${task.frente}</span>
+                <span class="text-[10px] text-slate-400">⏱ ${task.duracion} min</span>
+              </div>
+              <p class="text-xs font-semibold text-white mt-1.5 leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${escapeHtml(task.text)}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="loadTaskToTimer('${escapeHtml(task.text)}', ${task.duracion})" title="Cargar al Pomodoro" class="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors touch-target-min flex items-center justify-center">
+              <i data-lucide="play" class="w-4 h-4"></i>
+            </button>
+            <button onclick="moveTaskToBuffer('${task.id}')" title="Enviar al Buffer" class="p-2 text-slate-400 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors touch-target-min flex items-center justify-center">
+              <i data-lucide="corner-down-right" class="w-4 h-4"></i>
             </button>
           </div>
         `;
-      } else {
-        todayTasks.forEach(task => {
-          const isDone = task.status === 'DONE';
-          const isBuffer = task.status === 'BUFFER';
-          const card = document.createElement('div');
-          
-          card.className = `p-3.5 sm:p-4 rounded-xl border transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-            isDone 
-              ? 'bg-slate-50 border-slate-200 opacity-60' 
-              : isBuffer
-              ? 'bg-purple-50 border-purple-200'
-              : 'bg-white border-slate-200 hover:border-indigo-300 shadow-xs'
-          }`;
-
-          card.innerHTML = `
-            <div class="flex items-start gap-3 flex-1 min-w-0 w-full sm:w-auto">
-              <button onclick="toggleTaskStatus('${task.id}')" title="Marcar completada" class="touch-target-min mt-0.5 w-7 h-7 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center transition border shrink-0 ${
-                isDone 
-                  ? 'bg-emerald-500 border-emerald-600 text-white' 
-                  : 'bg-white border-slate-300 hover:border-emerald-500 text-transparent'
-              }">
-                <i data-lucide="check" class="w-4 h-4"></i>
-              </button>
-
-              <div class="space-y-1 min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <span class="text-[11px] sm:text-xs px-2 py-0.5 rounded font-semibold ${getBlockBadgeClass(task.type)}">
-                    ${task.type}
-                  </span>
-                  <span class="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
-                    ${task.front}
-                  </span>
-                  <span class="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1">
-                    <i data-lucide="clock" class="w-3 h-3"></i> ${task.duration} min
-                  </span>
-                  ${isBuffer ? '<span class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-purple-200 text-purple-900 font-bold">En Buffer</span>' : ''}
-                </div>
-                <p class="text-xs sm:text-sm font-semibold text-slate-900 break-words ${isDone ? 'line-through text-slate-500' : ''}">
-                  ${task.title}
-                </p>
-              </div>
-            </div>
-
-            <!-- Acciones individuales (Touch targets optimizados) -->
-            <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 shrink-0">
-              ${!isDone ? `
-                <button onclick="setTimerPreset(${task.duration}, '${task.type}')" title="Cargar duración al Pomodoro" class="touch-target-min sm:h-auto px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg flex items-center gap-1 transition active:scale-95">
-                  <i data-lucide="timer" class="w-3.5 h-3.5"></i> <span>Timer</span>
-                </button>
-                <button onclick="delegateSingleToBuffer('${task.id}')" title="Enviar al Buffer más cercano (Regla #9)" class="touch-target-min sm:h-auto p-2 sm:p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition active:scale-95" title="Enviar al Buffer">
-                  <i data-lucide="corner-down-right" class="w-4 h-4"></i>
-                </button>
-              ` : ''}
-              <button onclick="deleteTask('${task.id}')" title="Eliminar tarea" class="touch-target-min sm:h-auto p-2 sm:p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition active:scale-95">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-      }
-
-      // Actualizar Barra de Progreso
-      const total = todayTasks.length;
-      const completed = todayTasks.filter(t => t.status === 'DONE').length;
-      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-      document.getElementById('progress-text').innerText = `${completed} / ${total}`;
-      document.getElementById('progress-percent').innerText = `${percent}%`;
-      document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+        container.appendChild(card);
+      });
     }
 
-    function renderBufferLightOptions(day) {
-      const options = BUFFER_LIGHT_SUGGESTIONS[day] || BUFFER_LIGHT_SUGGESTIONS[4];
-      const container = document.getElementById('buffer-light-options');
-      container.innerHTML = "";
+    function renderBufferCards(day) {
+      const cardsCont = document.getElementById('today-buffer-cards');
+      cardsCont.innerHTML = '';
+      const options = BUFFER_OPTIONS[day] || BUFFER_OPTIONS[4];
 
       options.forEach(opt => {
-        const item = document.createElement('div');
-        item.className = `p-3 rounded-xl border flex flex-col justify-between ${
-          opt.recommended 
-            ? 'bg-purple-100/80 border-purple-300 text-purple-950 font-medium' 
-            : 'bg-white border-purple-200/60 text-purple-900'
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl border flex flex-col justify-between gap-2 ${
+          opt.rec ? 'bg-purple-950/40 border-purple-800/80' : 'bg-slate-900 border-slate-800'
         }`;
-        item.innerHTML = `
+        div.innerHTML = `
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-bold text-[11px]">${opt.label}</span>
-              ${opt.recommended ? '<span class="text-[10px] bg-purple-600 text-white px-1.5 py-0.2 rounded font-bold">Recomendada</span>' : ''}
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold ${opt.rec ? 'text-purple-300' : 'text-slate-300'}">${opt.label}</span>
+              <span class="text-[10px] text-slate-400">⏱ ${opt.dur} min</span>
             </div>
-            <p class="text-[11px] leading-tight text-slate-700">${opt.text}</p>
+            <p class="text-xs text-slate-200 mt-1 leading-snug">${opt.text}</p>
           </div>
-          <button onclick="addLightBufferTask('${opt.text.replace(/'/g, "\\'")}', ${day})" class="touch-target-min mt-2 text-[11px] font-bold text-purple-800 hover:text-purple-950 underline text-left flex items-center">
-            + Añadir como microtarea de hoy
+          <button onclick="loadTaskToTimer('${escapeHtml(opt.text)}', ${opt.dur})" class="w-full mt-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded text-xs font-semibold flex items-center justify-center gap-1">
+            <i data-lucide="play" class="w-3 h-3"></i><span>Cargar Foco</span>
           </button>
         `;
-        container.appendChild(item);
+        cardsCont.appendChild(div);
       });
     }
 
-    function addLightBufferTask(text, day) {
-      const newTask = {
-        id: "t-" + Date.now(),
-        title: text,
-        type: "⚪ Ligero",
-        duration: 15,
-        front: "Mantenimiento",
-        day: day,
-        cycle: currentCycle,
-        status: "TODO"
-      };
-      tasks.push(newTask);
-      saveState();
-      updateUI();
-      showToast("Tarea ligera agregada al buffer de hoy");
-    }
+    // ----------------------------------------------------
+    // VISTA 2: GRID DE 15 DÍAS
+    // ----------------------------------------------------
+    function renderCycleGrid() {
+      const container = document.getElementById('cycle-grid-container');
+      container.innerHTML = '';
 
-    /* ================= REGLA DE ORO #9: ENVIAR AL BUFFER ================= */
-    function sendRemainingToBuffer() {
-      // Encuentra el buffer más cercano para el día actual
-      let targetBufferDay = 4;
-      if (currentDay <= 4) targetBufferDay = 4;
-      else if (currentDay <= 8) targetBufferDay = 8;
-      else if (currentDay <= 12) targetBufferDay = 12;
-      else targetBufferDay = 15;
-
-      let movedCount = 0;
-      tasks = tasks.map(t => {
-        if (t.cycle === currentCycle && t.day === currentDay && t.status !== 'DONE') {
-          movedCount++;
-          return { ...t, day: targetBufferDay, status: 'BUFFER' };
-        }
-        return t;
-      });
-
-      if (movedCount > 0) {
-        saveState();
-        updateUI();
-        showToast(`${movedCount} tarea(s) enviadas al Buffer del Día ${targetBufferDay} (Cero culpa)`);
-      } else {
-        showToast("No hay tareas pendientes por mover.");
-      }
-    }
-
-    function delegateSingleToBuffer(taskId) {
-      let targetBufferDay = 4;
-      if (currentDay <= 4) targetBufferDay = 4;
-      else if (currentDay <= 8) targetBufferDay = 8;
-      else if (currentDay <= 12) targetBufferDay = 12;
-      else targetBufferDay = 15;
-
-      tasks = tasks.map(t => {
-        if (t.id === taskId) {
-          return { ...t, day: targetBufferDay, status: 'BUFFER' };
-        }
-        return t;
-      });
-
-      saveState();
-      updateUI();
-      showToast(`Tarea delegada al Buffer del Día ${targetBufferDay}`);
-    }
-
-    /* ================= VISTA 2: CALENDARIO 15 DÍAS ================= */
-    function renderCalendar() {
-      const grid = document.getElementById('calendar-grid');
-      grid.innerHTML = "";
-
-      for (let day = 1; day <= 15; day++) {
-        const info = DAY_INFO_MAP[day] || { title: `Día ${day}`, isBuffer: false };
-        const dayTasks = tasks.filter(t => t.cycle === currentCycle && t.day === day);
-        const doneTasks = dayTasks.filter(t => t.status === 'DONE').length;
-        const isCurrent = day === currentDay;
+      for (let d = 1; d <= 15; d++) {
+        const info = DAYS_INFO[d];
+        const dayTasks = state.tasks.filter(t => t.ciclo === 1 && t.dia === d);
+        const doneCount = dayTasks.filter(t => t.status === 'done').length;
+        const isCurrent = state.currentDay === d;
 
         const card = document.createElement('div');
-        let cardStyle = "bg-white border-slate-200 hover:border-indigo-300";
+        let cardBg = 'bg-slate-900/80 border-slate-800';
 
-        if (day === 15) {
-          cardStyle = isCurrent 
-            ? "bg-amber-100 border-amber-500 ring-2 ring-amber-400" 
-            : "bg-amber-50/80 border-amber-300";
-        } else if (info.isBuffer) {
-          cardStyle = isCurrent 
-            ? "bg-purple-100 border-purple-500 ring-2 ring-purple-400" 
-            : "bg-purple-50/70 border-purple-200";
-        } else if (isCurrent) {
-          cardStyle = "bg-blue-50/80 border-blue-500 ring-2 ring-blue-400";
+        if (info.type === 'buffer') cardBg = 'bg-purple-950/20 border-purple-900/50';
+        if (info.type === 'buffer-close') cardBg = 'bg-purple-950/40 border-purple-700/80';
+        if (isCurrent) cardBg += ' ring-2 ring-indigo-500';
+
+        card.className = `p-3.5 rounded-2xl border flex flex-col justify-between gap-3 transition-all cursor-pointer hover:border-slate-600 ${cardBg}`;
+        card.onclick = () => {
+          setCurrentDay(d);
+          switchView('today');
+        };
+
+        let blocksHtml = dayTasks.slice(0, 4).map(t => `
+          <div class="text-[11px] truncate flex items-center gap-1.5 ${t.status === 'done' ? 'line-through text-slate-500' : 'text-slate-300'}">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDotColor(t.tipo)}"></span>
+            <span class="truncate">${escapeHtml(t.text)}</span>
+          </div>
+        `).join('');
+
+        if (dayTasks.length > 4) {
+          blocksHtml += `<div class="text-[10px] text-slate-400 font-semibold">+${dayTasks.length - 4} más...</div>`;
         }
-
-        card.className = `p-3 sm:p-3.5 rounded-2xl border transition shadow-xs flex flex-col justify-between cursor-pointer active:scale-[0.98] ${cardStyle}`;
-        card.onclick = () => selectDay(day);
 
         card.innerHTML = `
           <div>
-            <div class="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded-full ${
-                day === 15 ? 'bg-amber-200 text-amber-900 font-extrabold' :
-                info.isBuffer ? 'bg-purple-200 text-purple-900' : 'bg-slate-100 text-slate-800'
-              }">
-                Día ${day}
-              </span>
-              ${isCurrent ? '<span class="text-[10px] bg-indigo-600 text-white font-bold px-1.5 py-0.5 rounded">HOY</span>' : ''}
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+              <span class="text-xs font-bold ${isCurrent ? 'text-indigo-400 font-black' : 'text-white'}">Día ${d}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                info.type.includes('buffer') ? 'bg-purple-900/60 text-purple-200' : 'bg-slate-800 text-slate-400'
+              }">${info.type.includes('buffer') ? 'BUFFER' : `${doneCount}/${dayTasks.length}`}</span>
             </div>
-
-            <h4 class="font-bold text-xs text-slate-900 line-clamp-1 mb-1">${info.title}</h4>
-            <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">${info.desc}</p>
+            <h4 class="text-xs font-semibold text-slate-200 mt-2 line-clamp-1">${info.title}</h4>
+            <div class="mt-2 space-y-1">
+              ${blocksHtml || '<div class="text-[11px] text-slate-400 italic">Día libre de mantención</div>'}
+            </div>
           </div>
 
-          <div class="mt-2.5 sm:mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>${dayTasks.length} microtareas</span>
-            <span class="font-semibold ${doneTasks === dayTasks.length && dayTasks.length > 0 ? 'text-emerald-600' : 'text-slate-600'}">
-              ${doneTasks}/${dayTasks.length}
-            </span>
+          <div class="pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400">
+            <span>${isCurrent ? '● Día actual' : 'Ver día'}</span>
+            <i data-lucide="arrow-right" class="w-3 h-3"></i>
           </div>
         `;
-        grid.appendChild(card);
+        container.appendChild(card);
       }
     }
 
-    /* ================= VISTA 3: TABLERO KANBAN ================= */
+    // ----------------------------------------------------
+    // VISTA 3: KANBAN
+    // ----------------------------------------------------
     function renderKanban() {
-      const filter = document.getElementById('kanban-filter-front') ? document.getElementById('kanban-filter-front').value : "ALL";
-      
-      const cols = {
-        TODO: document.getElementById('col-todo'),
-        PROGRESS: document.getElementById('col-progress'),
-        BUFFER: document.getElementById('col-buffer'),
-        DONE: document.getElementById('col-done')
-      };
-
-      Object.values(cols).forEach(col => col.innerHTML = "");
-
-      const counts = { TODO: 0, PROGRESS: 0, BUFFER: 0, DONE: 0 };
-
-      const filteredTasks = tasks.filter(t => {
-        if (t.cycle !== currentCycle) return false;
-        if (filter !== "ALL" && t.front !== filter) return false;
+      const frenteFilter = document.getElementById('kanban-frente-filter').value;
+      const tasks = state.tasks.filter(t => {
+        if (t.ciclo !== 1) return false;
+        if (frenteFilter !== 'ALL' && t.frente !== frenteFilter) return false;
         return true;
       });
 
-      filteredTasks.forEach(task => {
-        const status = task.status || 'TODO';
-        counts[status] = (counts[status] || 0) + 1;
+      const cols = {
+        todo: document.getElementById('kanban-col-todo'),
+        doing: document.getElementById('kanban-col-doing'),
+        buffer: document.getElementById('kanban-col-buffer'),
+        done: document.getElementById('kanban-col-done')
+      };
+
+      Object.values(cols).forEach(col => col.innerHTML = '');
+
+      const counts = { todo: 0, doing: 0, buffer: 0, done: 0 };
+
+      tasks.forEach(task => {
+        const st = task.status || 'todo';
+        counts[st] = (counts[st] || 0) + 1;
 
         const card = document.createElement('div');
-        card.className = "p-3 rounded-xl bg-white border border-slate-200 shadow-xs hover:shadow-sm transition space-y-2";
-        
+        card.className = 'p-3 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm space-y-2';
+
         card.innerHTML = `
-          <div class="flex items-center justify-between text-[10px]">
-            <span class="font-bold px-1.5 py-0.5 rounded ${getBlockBadgeClass(task.type)}">${task.type}</span>
-            <span class="font-semibold text-slate-500">Día ${task.day}</span>
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${getTypeBadgeClass(task.tipo)}">${task.tipo}</span>
+            <span class="text-[10px] text-slate-400">Día ${task.dia} · ${task.duracion}m</span>
           </div>
-
-          <p class="text-xs font-semibold text-slate-800 leading-snug break-words">${task.title}</p>
-
-          <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
-            <span class="text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded truncate max-w-[140px]">${task.front}</span>
-            <span class="text-slate-400 font-mono">${task.duration}m</span>
-          </div>
-
-          <!-- Selector de Estado Kanban -->
-          <div class="pt-1 flex items-center justify-between gap-1">
-            <select onchange="changeTaskStatus('${task.id}', this.value)" class="touch-target-min sm:h-auto w-full text-[11px] bg-slate-50 border border-slate-200 rounded px-2 py-1 text-slate-700 font-medium">
-              <option value="TODO" ${status === 'TODO' ? 'selected' : ''}>Por Hacer</option>
-              <option value="PROGRESS" ${status === 'PROGRESS' ? 'selected' : ''}>En Curso</option>
-              <option value="BUFFER" ${status === 'BUFFER' ? 'selected' : ''}>En Buffer</option>
-              <option value="DONE" ${status === 'DONE' ? 'selected' : ''}>Hecho</option>
+          <p class="text-xs font-medium text-white leading-snug">${escapeHtml(task.text)}</p>
+          <div class="flex items-center justify-between pt-1 border-t border-slate-700/60">
+            <span class="text-[10px] text-slate-400 truncate max-w-[100px]">${task.frente}</span>
+            <!-- Selector rápido de estado -->
+            <select onchange="updateTaskKanbanStatus('${task.id}', this.value)" class="bg-slate-900 text-[10px] text-slate-200 border border-slate-700 rounded px-1.5 py-0.5 focus:outline-none">
+              <option value="todo" ${st === 'todo' ? 'selected' : ''}>Por hacer</option>
+              <option value="doing" ${st === 'doing' ? 'selected' : ''}>En curso</option>
+              <option value="buffer" ${st === 'buffer' ? 'selected' : ''}>En buffer</option>
+              <option value="done" ${st === 'done' ? 'selected' : ''}>Hecho</option>
             </select>
           </div>
         `;
 
-        if (cols[status]) cols[status].appendChild(card);
+        if (cols[st]) cols[st].appendChild(card);
       });
 
-      document.getElementById('count-todo').innerText = counts.TODO;
-      document.getElementById('count-progress').innerText = counts.PROGRESS;
-      document.getElementById('count-buffer').innerText = counts.BUFFER;
-      document.getElementById('count-done').innerText = counts.DONE;
+      document.getElementById('kanban-count-todo').textContent = counts.todo;
+      document.getElementById('kanban-count-doing').textContent = counts.doing;
+      document.getElementById('kanban-count-buffer').textContent = counts.buffer;
+      document.getElementById('kanban-count-done').textContent = counts.done;
     }
 
-    function changeTaskStatus(taskId, newStatus) {
-      tasks = tasks.map(t => {
-        if (t.id === taskId) {
-          return { ...t, status: newStatus };
+    function updateTaskKanbanStatus(taskId, newStatus) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = newStatus;
+        if (newStatus === 'done') {
+          triggerDopamineReward();
         }
-        return t;
-      });
-
-      if (newStatus === 'DONE') {
-        triggerGentleDopamine();
+        saveTasksToStorage();
+        renderKanban();
+        renderTodayView();
       }
-
-      saveState();
-      updateUI();
     }
 
-    /* ================= VISTA 4: GESTOR MAESTRO DE TAREAS ================= */
-    function renderMasterTasks() {
-      const tbody = document.getElementById('master-tasks-tbody');
-      tbody.innerHTML = "";
-
-      const cycleTasks = tasks.filter(t => t.cycle === masterFilterCycle);
-
-      if (cycleTasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400 italic">No hay tareas creadas para el Ciclo ${masterFilterCycle}.</td></tr>`;
-        return;
-      }
-
-      cycleTasks.forEach(task => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50/80 transition";
-        tr.innerHTML = `
-          <td class="py-2.5 px-3 whitespace-nowrap">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
-              task.status === 'DONE' ? 'bg-emerald-100 text-emerald-800' :
-              task.status === 'BUFFER' ? 'bg-purple-100 text-purple-800' :
-              task.status === 'PROGRESS' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'
-            }">
-              ${task.status}
-            </span>
-          </td>
-          <td class="py-2.5 px-3 font-medium whitespace-nowrap">
-            <span class="px-1.5 py-0.5 rounded text-[10px] ${getBlockBadgeClass(task.type)}">${task.type}</span>
-          </td>
-          <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-xs break-words">${task.title}</td>
-          <td class="py-2.5 px-3 text-slate-600 whitespace-nowrap">${task.front}</td>
-          <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">Día ${task.day}</td>
-          <td class="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">${task.duration} min</td>
-          <td class="py-2.5 px-3 text-right whitespace-nowrap">
-            <button onclick="deleteTask('${task.id}')" class="touch-target-min sm:h-auto text-slate-400 hover:text-rose-600 p-2 sm:p-1 active:scale-95 transition">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Estilo de botones de ciclo maestro
-      for (let c = 1; c <= 3; c++) {
-        const btn = document.getElementById(`btn-master-c${c}`);
-        if (c === masterFilterCycle) {
-          btn.className = "touch-target-min sm:h-auto px-3 py-1 rounded-md bg-white text-indigo-700 shadow-xs font-bold";
+    // ----------------------------------------------------
+    // VISTA 4: GESTOR MAESTRO DE TAREAS & IMPRESIÓN
+    // ----------------------------------------------------
+    function setFilterCycle(cycleNum) {
+      state.filterCycle = cycleNum;
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`btn-cycle-${i}`);
+        if (i === cycleNum) {
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white';
         } else {
-          btn.className = "touch-target-min sm:h-auto px-3 py-1 rounded-md text-slate-600 hover:text-slate-900";
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white';
         }
       }
-    }
-
-    function filterMasterCycle(c) {
-      masterFilterCycle = c;
+      document.getElementById('print-cycle-label').textContent = `CICLO ${cycleNum}`;
       renderMasterTasks();
       lucide.createIcons();
     }
 
-    function handleCreateTask(e) {
-      e.preventDefault();
-      const title = document.getElementById('task-input-title').value.trim();
-      const front = document.getElementById('task-input-front').value;
-      const type = document.getElementById('task-input-type').value;
-      const duration = parseInt(document.getElementById('task-input-duration').value) || 25;
-      const cycle = parseInt(document.getElementById('task-input-cycle').value) || 1;
-      const day = parseInt(document.getElementById('task-input-day').value) || 1;
+    function renderMasterTasks() {
+      const cycle = state.filterCycle;
+      const tasks = state.tasks.filter(t => t.ciclo === cycle);
+      const container = document.getElementById('tasks-master-list');
+      container.innerHTML = '';
 
-      if (!title) return;
-
-      const newTask = {
-        id: "t-" + Date.now(),
-        title: title,
-        front: front,
-        type: type,
-        duration: duration,
-        cycle: cycle,
-        day: day,
-        status: "TODO"
-      };
-
-      tasks.push(newTask);
-      saveState();
-      updateUI();
-      document.getElementById('task-input-title').value = "";
-      showToast("Nueva microtarea registrada en el sistema");
-    }
-
-    function autoFillDuration() {
-      const type = document.getElementById('task-input-type').value;
-      const durationInput = document.getElementById('task-input-duration');
-      if (type.includes("Arranque")) durationInput.value = 10;
-      else if (type.includes("Profundo")) durationInput.value = 50;
-      else if (type.includes("Medio")) durationInput.value = 25;
-      else if (type.includes("Ligero")) durationInput.value = 15;
-      else if (type.includes("Cierre")) durationInput.value = 5;
-      else if (type.includes("Buffer")) durationInput.value = 60;
-    }
-
-    function openAddTaskModal(day) {
-      switchView('tasks');
-      document.getElementById('task-input-day').value = day;
-      document.getElementById('task-input-title').focus();
-    }
-
-    /* ================= FUNCIÓN IMPRIMIR LISTA TO-DO ================= */
-    function printTaskList() {
-      const printContainer = document.getElementById('print-area');
-      const cycleTasks = tasks.filter(t => t.cycle === masterFilterCycle);
-
-      // Agrupar tareas por Frente o por Día para lectura óptima física
-      const groupedByFront = {};
-      cycleTasks.forEach(task => {
-        const key = `${task.front} (Día ${task.day})`;
-        if (!groupedByFront[key]) groupedByFront[key] = [];
-        groupedByFront[key].push(task);
-      });
-
-      const todayStr = new Date().toLocaleDateString('es-ES', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-      });
-
-      let html = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111; line-height: 1.4;">
-          <!-- Header de Impresión -->
-          <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-              <div>
-                <h1 style="font-size: 18pt; font-weight: 800; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                  Sistema de Ejecución 15 Días — Ciclo ${masterFilterCycle}
-                </h1>
-                <p style="font-size: 10pt; margin: 0; color: #444;">
-                  Lista To-Do Imprimible · Reducción de sobrecarga ejecutiva · Enfoque TEA/TDA
-                </p>
-              </div>
-              <div style="text-align: right; font-size: 9pt; color: #555;">
-                <div>Fecha: <strong>${todayStr}</strong></div>
-                <div>Total Microtareas: <strong>${cycleTasks.length}</strong></div>
-              </div>
-            </div>
-            <!-- Regla clave impresa para recordar -->
-            <div style="margin-top: 10px; padding: 6px 10px; background: #f3f4f6; border-left: 3px solid #4b5563; font-size: 8.5pt;">
-              <strong>Regla de oro:</strong> Si una tarea se atasca, no te culpes: márcala con [B] y delega al Buffer más cercano (Días 4, 8, 12, 15).
-            </div>
+      if (tasks.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 bg-slate-900/60 rounded-2xl border border-dashed border-slate-800">
+            <p class="text-sm font-semibold text-slate-300">No hay tareas creadas para el Ciclo ${cycle}.</p>
+            <p class="text-xs text-slate-500 mt-1">Usa el formulario arriba para incorporar nuevos pendientes.</p>
           </div>
-
-          <!-- Cuadrícula / Lista agrupada de tareas -->
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-      `;
-
-      Object.entries(groupedByFront).forEach(([groupName, groupTasks]) => {
-        html += `
-          <div class="print-page-break-avoid" style="border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px; background: #fafafa;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px;">
-              <span style="font-size: 11pt; font-weight: bold; color: #111827;">${groupName}</span>
-              <span style="font-size: 8.5pt; color: #6b7280;">${groupTasks.length} microtarea(s)</span>
-            </div>
-            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
         `;
+        return;
+      }
 
-        groupTasks.forEach(task => {
-          const isDone = task.status === 'DONE';
-          const isBuffer = task.status === 'BUFFER';
-          const checkbox = isDone ? '&#9745;' : '&#9633;'; // [✓] o casilla vacía cuadrada
+      // Agrupación por Tarea Padre / Frente
+      const groups = {};
+      tasks.forEach(t => {
+        const key = t.parentTitle || `${t.frente} (Día ${t.dia})`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
 
-          html += `
-            <li style="display: flex; align-items: flex-start; justify-content: space-between; font-size: 10pt; padding: 3px 0; border-bottom: 1px dashed #e5e7eb;">
-              <div style="display: flex; align-items: flex-start; gap: 8px;">
-                <span style="font-size: 13pt; line-height: 1; font-weight: bold; width: 18px; display: inline-block;">
-                  ${checkbox}
-                </span>
-                <div>
-                  <span style="font-weight: 600; ${isDone ? 'text-decoration: line-through; color: #6b7280;' : 'color: #111827;'}">
-                    ${task.title}
-                  </span>
-                  <div style="font-size: 8.5pt; color: #4b5563; margin-top: 1px;">
-                    <span>${task.type}</span> &bull; <span>${task.front}</span> &bull; <span>Día ${task.day}</span>
-                    ${isBuffer ? ' &bull; <strong style="color: #6b21a8;">[EN BUFFER]</strong>' : ''}
+      Object.entries(groups).forEach(([groupTitle, items]) => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'print-card bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3';
+
+        const completed = items.filter(t => t.status === 'done').length;
+
+        let itemsHtml = items.map(t => {
+          const isDone = t.status === 'done';
+          return `
+            <div class="flex items-start justify-between gap-3 py-1.5 border-b border-slate-800/40 last:border-none">
+              <div class="flex items-start gap-2.5 min-w-0">
+                <!-- Checkbox interactivo / impreso -->
+                <button onclick="toggleTaskStatus('${t.id}')" class="no-print mt-0.5 touch-target-min flex items-center justify-center shrink-0">
+                  <div class="w-4 h-4 rounded border flex items-center justify-center ${
+                    isDone ? 'bg-emerald-600 border-emerald-500 text-white' : 'border-slate-600 bg-slate-800 text-transparent'
+                  }">
+                    <i data-lucide="check" class="w-3 h-3 stroke-[3]"></i>
+                  </div>
+                </button>
+                <span class="print-only text-base print-checkbox text-center font-bold mr-1">${isDone ? '✓' : ''}</span>
+                
+                <div class="min-w-0">
+                  <p class="text-xs font-medium ${isDone ? 'line-through text-slate-400' : 'text-slate-100'} print-text-dark">
+                    ${escapeHtml(t.text)}
+                  </p>
+                  <div class="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                    <span class="font-bold">${t.tipo}</span>
+                    <span>·</span>
+                    <span>Día ${t.dia}</span>
+                    <span>·</span>
+                    <span>⏱ ${t.duracion} min</span>
                   </div>
                 </div>
               </div>
-              <div style="text-align: right; font-family: monospace; font-size: 9pt; color: #374151; white-space: nowrap; margin-left: 12px;">
-                ⏱ ${task.duration} min
-              </div>
-            </li>
-          `;
-        });
 
-        html += `
-            </ul>
+              <!-- Acciones de tarea (no-print) -->
+              <div class="no-print flex items-center gap-1 shrink-0">
+                <button onclick="deleteCustomTask('${t.id}')" class="p-1 text-slate-500 hover:text-rose-400 transition-colors" title="Eliminar tarea">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        groupEl.innerHTML = `
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-white print-text-dark">${escapeHtml(groupTitle)}</h3>
+              <span class="text-[10px] text-slate-400">${items[0].frente}</span>
+            </div>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60">${completed}/${items.length}</span>
+          </div>
+          <div class="space-y-1">
+            ${itemsHtml}
           </div>
         `;
+        container.appendChild(groupEl);
       });
-
-      html += `
-          </div>
-
-          <!-- Cuadro de Notas y Cierre Físico al pie -->
-          <div class="print-page-break-avoid" style="margin-top: 24px; border: 1px solid #9ca3af; border-radius: 6px; padding: 12px; background: #fff;">
-            <div style="font-weight: bold; font-size: 10pt; margin-bottom: 6px;">
-              📝 Notas de Cierre Ritual / Primera Tarea de Mañana:
-            </div>
-            <div style="border-bottom: 1px solid #d1d5db; height: 24px;"></div>
-            <div style="border-bottom: 1px solid #d1d5db; height: 24px;"></div>
-            <div style="border-bottom: 1px solid #d1d5db; height: 24px;"></div>
-          </div>
-        </div>
-      `;
-
-      printContainer.innerHTML = html;
-
-      // Disparar diálogo de impresión
-      setTimeout(() => {
-        window.print();
-      }, 100);
     }
 
-    function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
-      saveState();
-      updateUI();
-      showToast("Tarea eliminada");
-    }
+    function handleCreateTask(e) {
+      e.preventDefault();
+      const text = document.getElementById('new-task-title').value.trim();
+      const frente = document.getElementById('new-task-frente').value;
+      const tipo = document.getElementById('new-task-type').value;
+      const dia = parseInt(document.getElementById('new-task-day').value);
 
-    /* ================= VISTA 5: CIERRE RITUAL & TRASPASO ================= */
-    function renderRitualView() {
-      document.getElementById('ritual-day-num').innerText = currentDay;
-      const cycleBox = document.getElementById('cycle-15-closure-box');
-      
-      // El recuadro del día 15 se resalta siempre, pero especialmente en el día 15
-      if (currentDay === 15) {
-        cycleBox.classList.remove('hidden');
-        cycleBox.classList.add('ring-2', 'ring-amber-400');
-      } else {
-        cycleBox.classList.remove('ring-2', 'ring-amber-400');
-      }
-    }
+      if (!text) return;
 
-    function saveDailyRitual() {
-      const advanced = document.getElementById('rit-advanced-note').value.trim();
-      const tomorrow = document.getElementById('rit-tomorrow-note').value.trim();
+      let duracion = 25;
+      if (tipo.includes('10')) duracion = 10;
+      if (tipo.includes('50')) duracion = 50;
+      if (tipo.includes('5 min')) duracion = 5;
+      if (tipo.includes('15')) duracion = 15;
 
-      // Desmarcar checkboxes para el día siguiente
-      for (let i = 1; i <= 6; i++) {
-        const el = document.getElementById(`rit-1`);
-        if (el) el.checked = false;
-      }
+      const newTask = {
+        id: 'user-' + Date.now(),
+        ciclo: state.filterCycle,
+        parentTitle: `Pendiente Adicional (${frente})`,
+        frente,
+        dia,
+        tipo,
+        duracion,
+        text,
+        status: 'todo'
+      };
 
-      document.getElementById('rit-advanced-note').value = "";
-      document.getElementById('rit-tomorrow-note').value = "";
+      state.tasks.push(newTask);
+      saveTasksToStorage();
+      document.getElementById('new-task-title').value = '';
 
-      showToast("Ritual completado. Mente despejada para descansar.");
-      triggerGentleDopamine();
-
-      if (currentDay < 15) {
-        changeDay(1);
-      }
-    }
-
-    function transferPendingToCycle2() {
-      // Regla específica: Lo no terminado se mueve al ciclo siguiente, no se reajusta el ciclo en curso
-      let movedCount = 0;
-      tasks = tasks.map(t => {
-        if (t.cycle === 1 && t.status !== 'DONE') {
-          movedCount++;
-          return {
-            ...t,
-            cycle: 2,
-            day: Math.min(t.day, 14), // reubicar dentro del ciclo 2
-            status: 'TODO'
-          };
-        }
-        return t;
-      });
-
-      currentCycle = 2;
-      currentDay = 1;
-      saveState();
-      updateUI();
-      showToast(`Ciclo 1 cerrado. ${movedCount} pendientes movidos limpiamente al Ciclo 2.`);
-      triggerGentleDopamine();
-      switchView('focus');
-    }
-
-    /* ================= TIMER POMODORO / ENFOQUE ================= */
-    function setTimerPreset(minutes, label) {
-      clearInterval(timerInterval);
-      timerRunning = false;
-      timerDuration = minutes * 60;
-      timerRemaining = timerDuration;
-      timerLabel = label;
-      updateTimerDisplay();
-      document.getElementById('timer-mode-label').innerText = `(${label})`;
-      const playBtn = document.getElementById('timer-play-btn');
-      if (playBtn) {
-        playBtn.className = "hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold items-center gap-1.5 active:scale-95 transition";
-      }
-      const mobBtn = document.getElementById('timer-play-btn-mob');
-      if (mobBtn) {
-        mobBtn.className = "touch-target-min px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold flex items-center justify-center gap-1 active:scale-95";
-        mobBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
-      }
-      document.getElementById('timer-btn-text').innerText = "Iniciar";
+      renderMasterTasks();
+      renderTodayView();
+      renderCycleGrid();
       lucide.createIcons();
+    }
+
+    function deleteCustomTask(id) {
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      saveTasksToStorage();
+      renderMasterTasks();
+      renderTodayView();
+      renderKanban();
+      lucide.createIcons();
+    }
+
+    function triggerPrintTodoList() {
+      window.print();
+    }
+
+    // ----------------------------------------------------
+    // ACCIONES GENERALES DE TAREAS & LOGICA BUFFER
+    // ----------------------------------------------------
+    function toggleTaskStatus(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = task.status === 'done' ? 'todo' : 'done';
+        if (task.status === 'done') {
+          triggerDopamineReward();
+        }
+        saveTasksToStorage();
+        renderTodayView();
+        renderMasterTasks();
+        renderKanban();
+      }
+    }
+
+    function moveTaskToBuffer(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = 'buffer';
+        saveTasksToStorage();
+        renderTodayView();
+        renderKanban();
+      }
+    }
+
+    function sendIncompleteToNextBuffer() {
+      const day = state.currentDay;
+      let nextBuffer = 4;
+      if (day > 4) nextBuffer = 8;
+      if (day > 8) nextBuffer = 12;
+      if (day > 12) nextBuffer = 15;
+
+      let moved = 0;
+      state.tasks.forEach(t => {
+        if (t.ciclo === 1 && t.dia === day && t.status !== 'done') {
+          t.dia = nextBuffer;
+          t.status = 'buffer';
+          moved++;
+        }
+      });
+
+      if (moved > 0) {
+        saveTasksToStorage();
+        renderTodayView();
+        renderCycleGrid();
+        alert(`Se han trasladado ${moved} tareas no completadas al Buffer del Día ${nextBuffer}. Cero culpa: el sistema asume contingencias.`);
+      } else {
+        alert('No hay tareas pendientes en este día para trasladar.');
+      }
+    }
+
+    function transferIncompleteToNextCycle() {
+      let count = 0;
+      state.tasks.forEach(t => {
+        if (t.ciclo === 1 && t.status !== 'done') {
+          t.ciclo = 2;
+          t.status = 'todo';
+          count++;
+        }
+      });
+
+      saveTasksToStorage();
+      renderAllViews();
+      alert(`Éxito: Se han trasladado ${count} microtareas no concluidas al Ciclo 2.`);
+    }
+
+    // ----------------------------------------------------
+    // TEMPORIZADOR POMODORO INTEGRADO
+    // ----------------------------------------------------
+    function loadTaskToTimer(title, minutes) {
+      state.timer.activeTaskTitle = title;
+      setCustomTimer(minutes, title);
+    }
+
+    function setCustomTimer(minutes, label) {
+      pauseTimer();
+      state.timer.totalSeconds = minutes * 60;
+      state.timer.remainingSeconds = minutes * 60;
+      updateTimerDisplays();
+      if (label) {
+        state.timer.activeTaskTitle = label;
+        document.getElementById('timer-active-task-name').textContent = label;
+        document.getElementById('top-timer-task').textContent = label;
+        document.getElementById('mob-timer-task').textContent = label;
+      }
     }
 
     function toggleTimer() {
-      const playBtn = document.getElementById('timer-play-btn');
-      const mobBtn = document.getElementById('timer-play-btn-mob');
-
-      if (timerRunning) {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        if (playBtn) playBtn.className = "hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold items-center gap-1.5 active:scale-95 transition";
-        if (mobBtn) {
-          mobBtn.className = "touch-target-min px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold flex items-center justify-center gap-1 active:scale-95";
-          mobBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
-        }
-        document.getElementById('timer-btn-text').innerText = "Reanudar";
+      if (state.timer.isRunning) {
+        pauseTimer();
       } else {
-        timerRunning = true;
-        if (playBtn) playBtn.className = "hidden sm:flex px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold items-center gap-1.5 active:scale-95 transition";
-        if (mobBtn) {
-          mobBtn.className = "touch-target-min px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold flex items-center justify-center gap-1 active:scale-95";
-          mobBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i>';
-        }
-        document.getElementById('timer-btn-text').innerText = "Pausar";
-
-        timerInterval = setInterval(() => {
-          if (timerRemaining > 0) {
-            timerRemaining--;
-            updateTimerDisplay();
-          } else {
-            clearInterval(timerInterval);
-            timerRunning = false;
-            playChime();
-            showToast("¡Tiempo completado! Toma tus 5 minutos de descanso obligatorio.");
-            triggerGentleDopamine();
-            setTimerPreset(5, "🧘 Descanso");
-          }
-        }, 1000);
+        startTimer();
       }
-      lucide.createIcons();
+    }
+
+    function startTimer() {
+      if (state.timer.isRunning) return;
+      state.timer.isRunning = true;
+      updatePlayIcons(true);
+
+      state.timer.intervalId = setInterval(() => {
+        if (state.timer.remainingSeconds > 0) {
+          state.timer.remainingSeconds--;
+          updateTimerDisplays();
+        } else {
+          pauseTimer();
+          triggerTimerEndAlarm();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      state.timer.isRunning = false;
+      if (state.timer.intervalId) {
+        clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+      }
+      updatePlayIcons(false);
     }
 
     function resetTimer() {
-      clearInterval(timerInterval);
-      timerRunning = false;
-      timerRemaining = timerDuration;
-      updateTimerDisplay();
-      const playBtn = document.getElementById('timer-play-btn');
-      if (playBtn) playBtn.className = "hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold items-center gap-1.5 active:scale-95 transition";
-      const mobBtn = document.getElementById('timer-play-btn-mob');
-      if (mobBtn) {
-        mobBtn.className = "touch-target-min px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold flex items-center justify-center gap-1 active:scale-95";
-        mobBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
+      pauseTimer();
+      state.timer.remainingSeconds = state.timer.totalSeconds;
+      updateTimerDisplays();
+    }
+
+    function updateTimerDisplays() {
+      const mins = Math.floor(state.timer.remainingSeconds / 60);
+      const secs = state.timer.remainingSeconds % 60;
+      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      document.getElementById('main-timer-display').textContent = formatted;
+      document.getElementById('top-timer-display').textContent = formatted;
+      document.getElementById('mob-timer-display').textContent = formatted;
+    }
+
+    function updatePlayIcons(running) {
+      const icon = running ? 'pause' : 'play';
+      const label = running ? 'Pausar' : 'Iniciar';
+      
+      const mainBtn = document.getElementById('main-btn-play');
+      if (mainBtn) {
+        mainBtn.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5"></i> <span>${label}</span>`;
       }
-      document.getElementById('timer-btn-text').innerText = "Iniciar";
+      const topBtn = document.getElementById('top-btn-play');
+      if (topBtn) {
+        topBtn.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i>`;
+      }
       lucide.createIcons();
     }
 
-    function updateTimerDisplay() {
-      const minutes = Math.floor(timerRemaining / 60);
-      const seconds = timerRemaining % 60;
-      const str = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      document.getElementById('timer-display').innerText = str;
-    }
-
-    function playChime() {
-      // Audio sintetizado suave por Web Audio API (cero URLs externas)
+    function triggerTimerEndAlarm() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3); // A5
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Re5
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.8);
-      } catch(e) {
-        console.log("Audio no soportado o bloqueado");
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) {
+        // Fallback silencioso si el navegador bloquea audio
       }
+      alert('⏰ ¡Bloque de tiempo finalizado! Recuerda la Regla 1: 5 minutos de descanso estricto.');
     }
 
-    /* ================= HELPERS & RECOMPENSA DOPAMINA ================= */
-    function toggleTaskStatus(taskId) {
-      tasks = tasks.map(t => {
-        if (t.id === taskId) {
-          const next = t.status === 'DONE' ? 'TODO' : 'DONE';
-          if (next === 'DONE') triggerGentleDopamine();
-          return { ...t, status: next };
-        }
-        return t;
-      });
-      saveState();
-      updateUI();
-    }
-
-    function triggerGentleDopamine() {
+    function triggerDopamineReward() {
       try {
-        if (typeof confetti === 'function') {
-          confetti({
-            particleCount: 28,
-            spread: 50,
-            origin: { y: 0.85 },
-            colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'],
-            disableForReducedMotion: true
-          });
-        }
-      } catch(e) {}
+        confetti({
+          particleCount: 30,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ['#10b981', '#6366f1', '#38bdf8']
+        });
+      } catch (e) {}
     }
 
-    function getBlockBadgeClass(type) {
-      if (!type) return "bg-slate-100 text-slate-700";
-      if (type.includes("Arranque")) return "bg-emerald-100 text-emerald-800 border border-emerald-200";
-      if (type.includes("Profundo")) return "bg-blue-100 text-blue-800 border border-blue-200";
-      if (type.includes("Medio")) return "bg-amber-100 text-amber-800 border border-amber-200";
-      if (type.includes("Ligero")) return "bg-slate-100 text-slate-700 border border-slate-200";
-      if (type.includes("Buffer")) return "bg-purple-100 text-purple-800 border border-purple-200";
-      if (type.includes("Cierre")) return "bg-teal-100 text-teal-800 border border-teal-200";
-      return "bg-slate-100 text-slate-700";
+    // ----------------------------------------------------
+    // REINICIO DE FÁBRICA
+    // ----------------------------------------------------
+    function openResetModal() {
+      document.getElementById('modal-reset').classList.remove('hidden');
+    }
+    function closeResetModal() {
+      document.getElementById('modal-reset').classList.add('hidden');
+    }
+    function resetToFactoryData() {
+      localStorage.removeItem('ciclo15_tasks');
+      localStorage.removeItem('ciclo15_day');
+      state.tasks = [...INITIAL_TASKS];
+      state.currentDay = 1;
+      closeResetModal();
+      renderAllViews();
+      alert('Sistema restablecido con éxito a los valores de diseño del Ciclo 1.');
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      const text = document.getElementById('toast-text');
-      text.innerText = msg;
-      toast.classList.remove('translate-y-16', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-      setTimeout(() => {
-        toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-16', 'opacity-0');
-      }, 3200);
+    // ----------------------------------------------------
+    // UTILIDADES DE RENDER Y FORMATO
+    // ----------------------------------------------------
+    function renderAllViews() {
+      renderTodayView();
+      renderCycleGrid();
+      renderKanban();
+      renderMasterTasks();
+      updateTimerDisplays();
     }
 
-    function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-    }
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
+    function getTypeBadgeClass(tipo) {
+      if (tipo.includes('🟢')) return 'bg-emerald-950 text-emerald-300 border border-emerald-800/60';
+      if (tipo.includes('🔵')) return 'bg-blue-950 text-blue-300 border border-blue-800/60';
+      if (tipo.includes('🟡')) return 'bg-amber-950 text-amber-300 border border-amber-800/60';
+      if (tipo.includes('⚪')) return 'bg-slate-800 text-slate-300 border border-slate-700/60';
+      if (tipo.includes('🔄')) return 'bg-purple-950 text-purple-300 border border-purple-800/60';
+      if (tipo.includes('🧘')) return 'bg-teal-950 text-teal-300 border border-teal-800/60';
+      return 'bg-slate-800 text-slate-300';
     }
 
-    function executeFactoryReset() {
-      localStorage.removeItem("tea_tasks_v1");
-      localStorage.removeItem("tea_day_v1");
-      localStorage.removeItem("tea_cycle_v1");
-      tasks = [...INITIAL_TASKS];
-      currentDay = 1;
-      currentCycle = 1;
-      closeModal('modal-reset');
-      updateUI();
-      showToast("Sistema restablecido con las tareas oficiales del Ciclo 1");
+    function getTypeDotColor(tipo) {
+      if (tipo.includes('🟢')) return 'bg-emerald-400';
+      if (tipo.includes('🔵')) return 'bg-blue-400';
+      if (tipo.includes('🟡')) return 'bg-amber-400';
+      if (tipo.includes('⚪')) return 'bg-slate-400';
+      if (tipo.includes('🔄')) return 'bg-purple-400';
+      if (tipo.includes('🧘')) return 'bg-teal-400';
+      return 'bg-slate-400';
     }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+
+    // Arrancar la app tras cargar DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
   </script>
 </body>
 </html>
